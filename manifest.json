@@ -1,0 +1,11 @@
+{
+	"id": "md-butler",
+	"name": "MD Butler",
+	"version": "1.0.0",
+	"minAppVersion": "1.8.0",
+	"description": "Automatically manages YAML frontmatter fields for all notes. A reliable alternative to Templater formulas for consistent metadata.",
+	"author": "PPeter",
+	"authorUrl": "",
+	"fundingUrl": "",
+	"isDesktopOnly": false
+}
