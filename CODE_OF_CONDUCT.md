@@ -1,22 +1,20 @@
 # Code of Conduct
 
-## Unser Anspruch
+## Our Commitment
 
-Wir möchten eine freundliche, respektvolle und konstruktive Community
-fördern.
+We want to promote a friendly, respectful, and constructive community.
 
-## Erwartetes Verhalten
+## Expected Behavior
 
--   Respektvoller Umgang
--   Sachliche Diskussionen
--   Konstruktives Feedback
--   Offenheit gegenüber unterschiedlichen Meinungen
+- Treat others with respect
+- Engage in factual discussions
+- Give constructive feedback
+- Be open to different opinions
 
-## Nicht akzeptabel
+## Not Acceptable
 
--   Beleidigungen oder persönliche Angriffe
--   Diskriminierung oder Belästigung
--   Spam oder absichtliche Störungen
+- Insults or personal attacks
+- Discrimination or harassment
+- Spam or deliberate disruptions
 
-Projekt-Maintainer behalten sich vor, Beiträge oder Kommentare zu
-moderieren oder zu entfernen, wenn sie gegen diese Regeln verstoßen.
+Project maintainers reserve the right to moderate or remove posts or comments if they violate these rules.

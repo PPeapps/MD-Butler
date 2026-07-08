@@ -2,16 +2,12 @@
 
 ## Supported Versions
 
-Derzeit wird ausschließlich die jeweils aktuelle veröffentlichte Version
-unterstützt.
+Currently, only the latest released version is supported.
 
-## Meldung von Sicherheitslücken
+## Reporting Security Vulnerabilities
 
-Bitte veröffentliche Sicherheitsprobleme nicht sofort öffentlich.
+Please do not make security issues public immediately.
 
-Stattdessen eröffne bitte **kein öffentliches Issue**, sondern
-kontaktiere den Maintainer direkt über GitHub oder einen anderen
-verfügbaren Kontaktweg.
+Instead, please **do not open a public issue**, but contact the maintainer directly via GitHub or another available contact method.
 
-Ich bemühe mich, berechtigte Meldungen zeitnah zu prüfen und
-gegebenenfalls zeitnah ein Sicherheitsupdate bereitzustellen.
+I will try to review legitimate reports promptly and provide a security update if necessary.

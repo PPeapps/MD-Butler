@@ -21,3 +21,28 @@ möglichst konkret.
 -   Achte darauf, dass der Code erfolgreich gebaut werden kann.
 
 Vielen Dank für deinen Beitrag!
+# Contributing
+
+Thank you for your interest in contributing to this project!
+
+## Reporting Bugs
+
+Please use GitHub Issues and describe: 
+- Expected behavior 
+- Actual behavior 
+- Steps to reproduce 
+- Obsidian version 
+- Plugin version
+
+## Feature Requests
+
+New ideas are welcome. Please describe the use case as specifically as possible.
+
+## Pull Requests
+
+- Create a feature branch.
+- Keep pull requests as small as possible.
+- Update the documentation if necessary.
+- Make sure the code can be built successfully.
+
+Thank you for your contribution!
