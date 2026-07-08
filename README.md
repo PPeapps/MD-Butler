@@ -1,8 +1,7 @@
 # MD Butler
 
 [![Obsidian Plugin](https://img.shields.io/badge/Obsidian-Plugin-7C3AED.svg)](https://obsidian.md/)
-[![Version](https://img.shields.io/badge/version-1.0.0-blue)](https://github.com/ppeter/md-butler)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![GitHub release](https://img.shields.io/github/v/release/PPeapps/MD-Butler)](https://github.com/PPeapps/MD-Butler/releases)[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 **Automatically manage YAML frontmatter fields for all your notes.**  
 An event-driven, configurable alternative to Templater formulas.
