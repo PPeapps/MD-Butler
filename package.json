@@ -1,6 +1,6 @@
 {
 	"name": "md-butler",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"description": "Obsidian plugin that automatically manages YAML frontmatter fields for all notes. Event-driven, configurable, a reliable alternative to Templater formulas.",
 	"main": "main.js",
 	"type": "module",
