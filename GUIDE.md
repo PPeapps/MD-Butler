@@ -627,6 +627,72 @@ This makes MD Butler safe to use alongside Templater, Dataview, Linter, and any 
 | `md-butler:full-repair` | Full repair | One command for force → cleanup → consistency check |
 | `md-butler:check-consistency` | Vault Consistency Check | After migration or to find files with missing fields |
 | `md-butler:cleanup-keys` | Clean up old YAML keys | After deleting a field — removes leftover keys vault-wide |
+| `md-butler:edit-select-fields` | Edit select fields in current note | Opens the Select Field Editor for the currently active note |
+| `md-butler:standardize-values` | Standardize / Normalize values | Opens the Value Standardizer to fix inconsistent values vault-wide |
+| `md-butler:bulk-rename-key` | Bulk rename YAML key | Opens the Key Rename dialog to rename a YAML key across all files |
+
+---
+
+## 12a. Modals & Dialogs
+
+Several commands open a modal dialog. Here is what each one does and how to use it.
+
+| Modal | Opened by | Purpose |
+|-------|-----------|---------|
+| **Select Field Editor** | `md-butler:edit-select-fields` | Edit `select` and `multi` fields of the current note |
+| **Consistency Report** | `md-butler:check-consistency` | Shows which files are missing fields or have invalid values |
+| **Bulk Progress** | `apply-all`, `force-apply`, `full-repair` | Shows bulk-operation progress and allows cancelling |
+| **Value Standardizer** | `md-butler:standardize-values` | Preview and fix inconsistent field values vault-wide |
+| **Key Rename** | `md-butler:bulk-rename-key` | Rename a YAML key across all files |
+
+### Select Field Editor
+
+Opens for the currently active note and shows one dropdown per enabled `select` field and one set of
+checkboxes per enabled `multi` field.
+
+- **Options** are loaded from `optionsFile` (📁) or `optionsDataview` (📊) when configured, otherwise from the manual `options` list. Options are always freshly reloaded when the dialog opens.
+- **Nested fields** (e.g. `note.NoteType`) are read and written correctly.
+- Select a value → it is written to the note's frontmatter immediately.
+- If the note has no select/multi fields configured, the dialog shows a hint instead.
+
+### Consistency Report
+
+Result of `md-butler:check-consistency`. Shows a summary and a detail list.
+
+- **Summary:** Scanned / Complete / Incomplete files + number of value issues.
+- **Incomplete Files:** Red list of files with their missing field names.
+- **Value Issues:** Orange, expandable per YAML key — shows `"current" → expected: [...]` for each file.
+- **Copy to clipboard:** Button at the top creates a plain-text version of the whole report — useful for sharing or documenting a migration.
+
+> **Tip:** In `if-exists` requirement mode a field is only flagged when its key exists but is empty
+> (`null`, `""`, `{}`). A completely missing key is *not* reported. See §9a.
+
+### Bulk Progress
+
+Shows `Processed X / N files` while a bulk operation runs.
+
+- **Cancel** aborts the operation — already processed files are kept, remaining ones are skipped.
+- After cancellation the button reads "Cancelling..." and is disabled.
+
+### Value Standardizer
+
+Scans the whole vault for values that do not match the configured `options` list (select/multi) or are
+not parseable (boolean/number). Only runs on enabled fields.
+
+- **Preview:** Issues are grouped by YAML key, then by file. For each issue you pick the correct value.
+- **Apply:** Writes the selected values back to all affected files in one pass.
+- **No undo:** Changes are permanent — review the preview carefully.
+- **Protected keys** are never touched.
+
+### Key Rename
+
+Renames a YAML key across the whole vault (also nested keys like `note.NoteID`).
+
+1. Enter the **old** and **new** YAML key.
+2. Click **Scan** — shows how many files are affected (button label updates, e.g. "Rename in 23 files").
+3. Click **Rename** — all files are updated immediately.
+   - ⚠ **Irreversible.** Files are modified as soon as you click.
+   - If a field in Settings uses the same key, its `yamlKey` is updated automatically and the old key is tracked for migration.
 
 ---
 
