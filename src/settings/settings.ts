@@ -34,7 +34,7 @@ export const DEFAULT_SETTINGS: MetadataButlerSettings = {
 		{ id: "dateCreated",  yamlKey: "dates.DateCreated", enabled: true,  order: 2, events: ["open"] },
 		{ id: "noteType",     yamlKey: "note.NoteType",     enabled: true,  order: 2.5, type: "select", options: ["Project", "Note", "Task", "Person", "Meeting", "Reference"], defaultValue: "Note", events: ["open", "rename", "bulk"] },
 		{ id: "lastModified", yamlKey: "dates.LastModified",enabled: true,  order: 3, events: ["rename", "bulk"] },
-		{ id: "lastMoved",    yamlKey: "dates.LastMoved",    enabled: true,  order: 4, events: ["rename"] },
+		{ id: "lastMoved",    yamlKey: "dates.LastMoved",    enabled: true,  order: 4, events: ["rename"], requirement: "if-exists" },
 		{ id: "source",       yamlKey: "Source",            enabled: false, order: 5, events: ["open", "rename", "bulk"], isCustom: true, defaultValue: "" },
 		{ id: "tags",         yamlKey: "Tags",              enabled: false, order: 6, events: ["modify", "bulk"],        isCustom: true, defaultValue: "" },
 	],

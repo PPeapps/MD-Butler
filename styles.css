@@ -52,3 +52,7 @@ If your plugin does not need CSS, delete this file.
 	align-items: center;
 	gap: 4px;
 }
+
+.md-butler-copy-btn {
+	margin-bottom: 1em;
+}

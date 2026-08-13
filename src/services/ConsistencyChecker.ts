@@ -8,6 +8,7 @@ import { PathFilter } from "./PathFilter";
 import { FilterMode } from "../settings/settings";
 import { readOptionsForWriter } from "../utils/SelectUtils";
 import { getNested } from "../utils/NestedPath";
+import { ConditionEvaluator } from "./ConditionEvaluator";
 
 export interface FileResult {
 	file: TFile;
@@ -63,6 +64,7 @@ export class ConsistencyChecker {
 		const results: FileResult[] = [];
 		const valueIssues: ValueIssue[] = [];
 		let completeCount = 0;
+		let scannedCount = 0;
 
 		for (const file of files) {
 			if (
@@ -74,14 +76,25 @@ export class ConsistencyChecker {
 				)
 			)
 				continue;
+			scannedCount++;
 
 			const cache = app.metadataCache.getFileCache(file);
 			const frontmatter = cache?.frontmatter ?? {};
 			const missing: string[] = [];
 
 			for (const field of enabledFields) {
-				if (getNested(frontmatter, field.yamlKey) === undefined) {
-					missing.push(field.yamlKey);
+				if (!ConditionEvaluator.evaluate(file, field.condition, app)) {
+					continue;
+				}
+				const val = getNested(frontmatter, field.yamlKey);
+				if (field.requirement === "if-exists") {
+					if (val !== undefined && (val === null || val === "" || (typeof val === "object" && Object.keys(val).length === 0))) {
+						missing.push(field.yamlKey);
+					}
+				} else {
+					if (val === undefined) {
+						missing.push(field.yamlKey);
+					}
 				}
 			}
 
@@ -92,6 +105,9 @@ export class ConsistencyChecker {
 			}
 
 			for (const field of optionFields) {
+				if (!ConditionEvaluator.evaluate(file, field.condition, app)) {
+					continue;
+				}
 				const raw = getNested(frontmatter, field.yamlKey);
 				if (raw === undefined || raw === null) continue;
 
@@ -163,7 +179,7 @@ export class ConsistencyChecker {
 		}
 
 		return {
-			totalFiles: files.length,
+			totalFiles: scannedCount,
 			completeFiles: completeCount,
 			incompleteFiles: results.length,
 			results,

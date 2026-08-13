@@ -23,6 +23,20 @@ export class ConsistencyModal extends Modal {
 
 		contentEl.createEl("h2", { text: "Vault Consistency Check" });
 
+		const copyBtn = contentEl.createEl("button", {
+			text: "Copy report to clipboard",
+			cls: "md-butler-copy-btn",
+		});
+		copyBtn.addEventListener("click", () => {
+			void navigator.clipboard.writeText(
+				this.buildPlainTextReport()
+			);
+			copyBtn.textContent = "Copied!";
+			window.setTimeout(() => {
+				copyBtn.textContent = "Copy report to clipboard";
+			}, 2000);
+		});
+
 		const summary = contentEl.createDiv();
 		summary.createEl("p", {
 			text: `Scanned: ${this.report.totalFiles} files`,
@@ -102,6 +116,44 @@ export class ConsistencyModal extends Modal {
 				exp.style.color = "var(--color-green, #4caf50)";
 			}
 		}
+	}
+
+	private buildPlainTextReport(): string {
+		const lines: string[] = [];
+		lines.push("Vault Consistency Check");
+		lines.push("======================");
+		lines.push("");
+		lines.push(`Scanned:   ${this.report.totalFiles} files`);
+		lines.push(`Complete:  ${this.report.completeFiles} files`);
+		lines.push(`Incomplete: ${this.report.incompleteFiles} files`);
+		lines.push(`Value issues: ${this.report.valueIssues.length}`);
+		lines.push("");
+
+		if (this.report.valueIssues.length > 0) {
+			lines.push("Value Issues");
+			lines.push("-------------");
+			const grouped = this.groupByField(this.report.valueIssues);
+			for (const [yamlKey, issues] of grouped) {
+				lines.push(`\n${yamlKey} (${issues.length})`);
+				for (const issue of issues) {
+					lines.push(
+						`  ${issue.file.path}: "${issue.currentValue}" → expected: [${issue.expectedValues.join(", ")}]`
+					);
+				}
+			}
+			lines.push("");
+		}
+
+		if (this.report.incompleteFiles > 0) {
+			lines.push("Incomplete Files");
+			lines.push("-----------------");
+			for (const r of this.report.results) {
+				lines.push(`${r.file.path}`);
+				lines.push(`  Missing: ${r.missingFields.join(", ")}`);
+			}
+		}
+
+		return lines.join("\n");
 	}
 
 	private groupByField(

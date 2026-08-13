@@ -32,7 +32,7 @@ export class SelectFieldModal extends Modal {
 		}
 
 		for (const f of this.fields) {
-			if ((!f.options || f.options.length === 0) && f.optionsFile) {
+			if (f.optionsFile) {
 				await loadOptionsFromFile(f, this.app);
 			}
 		}

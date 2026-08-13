@@ -694,6 +694,17 @@ export class FieldListComponent {
 					});
 			}
 
+			/* Requirement Dropdown */
+			const reqContainer = row.createDiv();
+			new DropdownComponent(reqContainer)
+				.addOption("required", "Required")
+				.addOption("if-exists", "If-exists")
+				.setValue(field.requirement ?? "required")
+				.onChange(async (val) => {
+					field.requirement = val as "required" | "if-exists";
+					await this.plugin.saveSettings();
+				});
+
 			/* Enabled Toggle */
 			const toggleContainer = row.createDiv();
 			new ToggleComponent(toggleContainer)

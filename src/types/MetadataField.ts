@@ -19,6 +19,7 @@ export type ConditionOperator =
 	| "equals"
 	| "matches"
 	| "contains";
+export type FieldRequirement = "required" | "if-exists";
 
 export interface ConditionConfig {
 	type: ConditionType;
@@ -41,4 +42,5 @@ export interface MetadataFieldConfig {
 	events?: EventType[];
 	isCustom?: boolean;
 	condition?: ConditionConfig;
+	requirement?: FieldRequirement;
 }
