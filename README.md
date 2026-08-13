@@ -1,5 +1,9 @@
 # MD Butler
 
+<p align="center">
+  <img src="logo.png" alt="MD Butler" width="200"/>
+</p>
+
 **MD Butler** is an Obsidian plugin that automatically manages YAML frontmatter fields for all your notes. Event-driven, configurable, and a reliable alternative to Templater formulas for consistent metadata.
 
 ## Features
