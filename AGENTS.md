@@ -50,3 +50,25 @@ src/
 - Single responsibility per module.
 - Bundle everything into `main.js`.
 - Prefer `async/await` over promise chains.
+
+## Lint / typecheck process (WARNING — do not dirty the tree)
+
+The repo is currently ESLint-clean (283 → 0 messages) and `tsc` green.
+**Never** run `npm run lint --fix` and **never** run a bare `npx eslint`:
+`npx eslint` resolves to global ESLint v10.8.1 and `--fix` rewrites `as any`
+→ `as unknown`, which breaks `tsc`. Only:
+
+```bash
+# lint a single file
+& ".\node_modules\.bin\eslint.cmd" src/<file>
+# lint whole src
+& ".\node_modules\.bin\eslint.cmd" src
+# typecheck
+npx tsc -noEmit -skipLibCheck
+# build (runs tsc + esbuild)
+npm run build
+```
+
+Key rules used by `eslint-plugin-obsidianmd` and their fixes are documented in
+`MD Butler/03-Lint-Learnings.md` in the Knowledge-plus vault and in the opencode
+skill `obsidian-plugin-lint`.

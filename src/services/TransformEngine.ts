@@ -134,6 +134,7 @@ export class TransformEngine {
 			case "fileName":
 				return ctx.file.name;
 			case "fileFolder":
+			case "folder":
 				return ctx.file.parent?.path ?? "";
 			case "filePath":
 				return ctx.file.path;
@@ -153,14 +154,22 @@ export class TransformEngine {
 			const key = expr.slice(12);
 			const fm = this.app.metadataCache.getFileCache(ctx.file)?.frontmatter;
 			if (!fm) return null;
-			let val = getNested(fm, key);
-			if (val === undefined) {
-				val = this.findNestedCI(fm, key);
-			}
-			return val !== undefined ? String(val) : null;
+			const val: unknown = this.resolveFrontmatterValue(fm, key);
+			return val === null ? null : safeStringify(val);
 		}
 
 		return null;
+	}
+
+	private resolveFrontmatterValue(
+		obj: Record<string, unknown>,
+		path: string
+	): unknown {
+		let val: unknown = getNested(obj, path);
+		if (val === undefined) {
+			val = this.findNestedCI(obj, path);
+		}
+		return val === undefined ? null : val;
 	}
 
 	private resolveLookup(
@@ -193,7 +202,7 @@ export class TransformEngine {
 
 		const cacheKey = `${resolvedPath}::${resolvedField}`;
 		if (this.lookupCache?.has(cacheKey)) {
-			const cached = this.lookupCache!.get(cacheKey)!;
+			const cached = this.lookupCache.get(cacheKey);
 			this.lookupDepth--;
 			return cached || null;
 		}
@@ -219,7 +228,6 @@ export class TransformEngine {
 		const fm = cache?.frontmatter;
 		if (!fm) return null;
 
-		const lowerField = field.toLowerCase();
 		let val: unknown = getNested(fm, field);
 		if (val === undefined) {
 			val = this.findNestedCI(fm, field);
@@ -227,7 +235,7 @@ export class TransformEngine {
 		if (val === undefined || val === null) return null;
 
 		if (Array.isArray(val)) return val.join(", ");
-		return String(val);
+		return safeStringify(val);
 	}
 
 	private resolveLookupPath(
@@ -272,18 +280,33 @@ export class TransformEngine {
 		return null;
 	}
 
-	private findNestedCI(obj: Record<string, any>, path: string): any {
+	private findNestedCI(
+		obj: Record<string, unknown>,
+		path: string
+	): unknown {
 		const segments = path.split(".");
-		let current: any = obj;
+		let current: unknown = obj;
 		for (const seg of segments) {
-			const lower = seg.toLowerCase();
-			const found = Object.entries(current).find(
-				([k]) => k.toLowerCase() === lower
+			if (typeof current !== "object" || current === null) {
+				return undefined;
+			}
+			const entries = Object.entries(current as Record<string, unknown>);
+			const found = entries.find(
+				([k]) => k.toLowerCase() === seg.toLowerCase()
 			);
 			if (!found) return undefined;
 			current = found[1];
 		}
 		return current;
 	}
+}
 
+function safeStringify(value: unknown): string {
+	if (value == null) return "";
+	if (typeof value === "string") return value;
+	if (typeof value === "number" || typeof value === "boolean") {
+		return String(value);
+	}
+	if (Array.isArray(value)) return value.join(", ");
+	return JSON.stringify(value) ?? "";
 }

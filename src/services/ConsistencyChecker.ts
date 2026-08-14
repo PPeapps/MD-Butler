@@ -10,6 +10,16 @@ import { readOptionsForWriter } from "../utils/SelectUtils";
 import { getNested } from "../utils/NestedPath";
 import { ConditionEvaluator } from "./ConditionEvaluator";
 
+function toSafeString(value: unknown): string {
+	if (value == null) return "";
+	if (typeof value === "string") return value;
+	if (typeof value === "number" || typeof value === "boolean") {
+		return String(value);
+	}
+	if (Array.isArray(value)) return value.join(", ");
+	return JSON.stringify(value) ?? "";
+}
+
 export interface FileResult {
 	file: TFile;
 	missingFields: string[];
@@ -122,7 +132,7 @@ export class ConsistencyChecker {
 						? raw.filter(
 								(v): v is string => typeof v === "string"
 						  )
-						: String(raw)
+						: toSafeString(raw)
 								.split(",")
 								.map((s) => s.trim())
 								.filter(Boolean);
@@ -159,8 +169,8 @@ export class ConsistencyChecker {
 					}
 				} else {
 					const val = Array.isArray(raw)
-						? String(raw[0] ?? "")
-						: String(raw);
+						? toSafeString(raw[0] ?? "")
+						: toSafeString(raw);
 					if (
 						!validOptions.some(
 							(o) => o === val

@@ -2,6 +2,16 @@ import { App, TFile } from "obsidian";
 import { ConditionConfig } from "../types/MetadataField";
 import { getNested } from "../utils/NestedPath";
 
+function toSafeString(value: unknown): string {
+	if (value == null) return "";
+	if (typeof value === "string") return value;
+	if (typeof value === "number" || typeof value === "boolean") {
+		return String(value);
+	}
+	if (Array.isArray(value)) return value.join(", ");
+	return JSON.stringify(value) ?? "";
+}
+
 export class ConditionEvaluator {
 	static evaluate(
 		file: TFile,
@@ -19,7 +29,7 @@ export class ConditionEvaluator {
 		file: TFile,
 		condition: ConditionConfig | undefined,
 		app: App,
-		fm?: Record<string, any>
+		fm?: Record<string, unknown>
 	): boolean {
 		if (!condition || condition.type === "always") return true;
 
@@ -55,19 +65,19 @@ export class ConditionEvaluator {
 		file: TFile,
 		condition: ConditionConfig,
 		app: App,
-		fm?: Record<string, any>
+		fm?: Record<string, unknown>
 	): boolean {
 		const key = condition.frontmatterKey;
 		if (!key) return false;
 		const frontmatter = fm !== undefined ? fm : (app.metadataCache.getFileCache(file)?.frontmatter ?? {});
-		const val = getNested(frontmatter, key);
+		const val: unknown = getNested(frontmatter, key);
 
 		if (condition.operator === "exists") {
 			return val !== undefined;
 		}
 		if (val === undefined || val === null) return false;
 		return ConditionEvaluator.matchValue(
-			String(val),
+			toSafeString(val),
 			condition
 		);
 	}

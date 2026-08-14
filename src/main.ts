@@ -2,7 +2,7 @@
  * Plugin entry point. Handles lifecycle (onload/onunload),
  * event registration, and coordinates service orchestration.
  */
-import { Notice, Plugin, TFile } from "obsidian";
+import { Notice, Plugin, TAbstractFile, TFile } from "obsidian";
 import {
 	MetadataButlerSettings,
 	DEFAULT_SETTINGS,
@@ -57,10 +57,11 @@ export default class MetadataButlerPlugin extends Plugin {
 	private standardizer = new StandardizerService(this.app);
 
 	async loadSettings() {
+		const loaded = (await this.loadData()) as Partial<MetadataButlerSettings> | undefined;
 		this.settings = Object.assign(
 			{},
 			DEFAULT_SETTINGS,
-			await this.loadData()
+			loaded ?? {}
 		);
 		if (!this.settings.pendingMigrations) {
 			this.settings.pendingMigrations = [];
@@ -105,13 +106,13 @@ export default class MetadataButlerPlugin extends Plugin {
 		}
 		// Migration: remove modify from lastModified (Konflikt mit update-time-on-edit)
 		const lmField = this.settings.fields.find(f => f.id === "lastModified");
-		if (lmField && lmField.events && lmField.events.includes("modify" as any)) {
-			lmField.events = lmField.events.filter(e => e !== "modify") as EventType[];
+		if (lmField && lmField.events && lmField.events.includes("modify")) {
+			lmField.events = lmField.events.filter(e => e !== "modify");
 			await this.saveSettings();
 		}
 		this.previousFields = JSON.parse(
 			JSON.stringify(this.settings.fields)
-		);
+		) as MetadataFieldConfig[];
 
 		// DataviewJS-Optionen laden (leise — nur Log bei Fehler)
 		for (const field of this.settings.fields) {
@@ -166,7 +167,7 @@ export default class MetadataButlerPlugin extends Plugin {
 		}
 		this.previousFields = JSON.parse(
 			JSON.stringify(this.settings.fields)
-		);
+		) as MetadataFieldConfig[];
 		await this.saveData(this.settings);
 	}
 
@@ -175,22 +176,22 @@ export default class MetadataButlerPlugin extends Plugin {
 		this.addSettingTab(new MetadataButlerSettingTab(this.app, this));
 		this.registerEvents();
 		this.addCommand({
-			id: "md-butler:apply-all",
-			name: "Apply Metadata to all Notes",
+			id: "apply-all",
+			name: "Apply metadata to all notes",
 			callback: async () => await this.bulkUpdateAll(),
 		});
 		this.addCommand({
-			id: "md-butler:check-consistency",
-			name: "Vault Consistency Check",
+			id: "check-consistency",
+			name: "Vault consistency check",
 			callback: () => this.checkConsistency(),
 		});
 		this.addCommand({
-			id: "md-butler:cleanup-keys",
+			id: "cleanup-keys",
 			name: "Clean up old YAML keys",
 			callback: async () => await this.cleanupOrphanedKeys(),
 		});
 		this.addCommand({
-			id: "md-butler-edit-select-fields",
+			id: "edit-select-fields",
 			name: "Edit select fields in current note",
 			checkCallback: (checking: boolean) => {
 				const activeFile = this.app.workspace.getActiveFile();
@@ -202,22 +203,22 @@ export default class MetadataButlerPlugin extends Plugin {
 			},
 		});
 		this.addCommand({
-			id: "md-butler:force-apply",
+			id: "force-apply",
 			name: "Force-apply metadata to all notes (overwrite all)",
 			callback: async () => await this.forceUpdateAll(),
 		});
 		this.addCommand({
-			id: "md-butler:full-repair",
+			id: "full-repair",
 			name: "Full repair: force-apply → cleanup → consistency check",
 			callback: async () => await this.fullRepair(),
 		});
 		this.addCommand({
-			id: "md-butler:standardize",
+			id: "standardize",
 			name: "Standardize field values",
 			callback: async () => await this.standardizeValues(),
 		});
 		this.addCommand({
-			id: "md-butler:rename-key",
+			id: "rename-key",
 			name: "Rename YAML key (bulk)",
 			callback: () => {
 				new BulkRenameModal(this.app, this).open();
@@ -228,7 +229,7 @@ export default class MetadataButlerPlugin extends Plugin {
 	private registerEvents() {
 		this.registerEvent(
 			this.app.workspace.on(
-				"file-open" as any,
+				"file-open",
 				(file: TFile | null) => {
 					try {
 						if (!file) return;
@@ -246,7 +247,7 @@ export default class MetadataButlerPlugin extends Plugin {
 		);
 
 		this.registerEvent(
-			this.app.vault.on("modify" as any, (file: any) => {
+			this.app.vault.on("modify", (file: TAbstractFile) => {
 				try {
 					if (!(file instanceof TFile)) return;
 					this.handleEvent({
@@ -263,8 +264,8 @@ export default class MetadataButlerPlugin extends Plugin {
 
 		this.registerEvent(
 			this.app.vault.on(
-				"rename" as any,
-				(file: any, oldPath: string) => {
+				"rename",
+				(file: TAbstractFile, oldPath: string) => {
 					try {
 						if (!(file instanceof TFile)) return;
 						this.handleEvent({
@@ -308,7 +309,8 @@ export default class MetadataButlerPlugin extends Plugin {
 			!ScopeManager.shouldProcess(
 				this.app,
 				event.file,
-				this.settings.processingMode
+				this.settings.processingMode,
+				this.settings.fields
 			)
 		) {
 			return;
@@ -390,7 +392,7 @@ export default class MetadataButlerPlugin extends Plugin {
 				this.settings.includedFolders.length === 0)
 		) {
 			new Notice(
-				"MD Butler: filterMode 'include' but no folders selected — no files will match."
+				"Filter mode is 'include' but no folders are selected — no files will match."
 			);
 			return true;
 		}
@@ -424,7 +426,8 @@ export default class MetadataButlerPlugin extends Plugin {
 				!ScopeManager.shouldProcess(
 					this.app,
 					file,
-					this.settings.processingMode
+					this.settings.processingMode,
+					this.settings.fields
 				)
 			)
 				continue;
@@ -510,9 +513,10 @@ export default class MetadataButlerPlugin extends Plugin {
 
 	private getVaultTags(): string[] | undefined {
 		try {
-			const tags: Record<string, number> = (
-				this.app.metadataCache as any
-			).getTags();
+			const metadataCache = this.app.metadataCache as unknown as {
+				getTags(): Record<string, number> | null;
+			};
+			const tags = metadataCache.getTags();
 			if (!tags) return undefined;
 			return Object.keys(tags).map((t) => t.replace(/^#/, ""));
 		} catch {
@@ -588,17 +592,17 @@ export default class MetadataButlerPlugin extends Plugin {
 			let hasChanges = false;
 			this.bulkRunning = true;
 			try {
-				await this.app.fileManager.processFrontMatter(
-					file,
-					(fm) => {
-						for (const key of orphans) {
-							if (key in fm && !protect.has(key)) {
-								delete fm[key];
-								hasChanges = true;
-							}
+			await this.app.fileManager.processFrontMatter(
+				file,
+				(fm: Record<string, unknown>) => {
+					for (const key of orphans) {
+						if (key in fm && !protect.has(key)) {
+							delete fm[key];
+							hasChanges = true;
 						}
 					}
-				);
+				}
+			);
 			} catch (e) {
 				console.error(
 					"md-butler: cleanup failed for",

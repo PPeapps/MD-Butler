@@ -8,7 +8,6 @@ import {
 	TextComponent,
 	DropdownComponent,
 	TFile,
-	Notice,
 } from "obsidian";
 import {
 	MetadataFieldConfig,
@@ -22,23 +21,12 @@ import MetadataButlerPlugin from "../main";
 import { FileSuggestModal } from "./FileSuggestModal";
 import { loadOptionsFromFile } from "../utils/SelectUtils";
 import { executeDataviewForField } from "../services/DataviewRunner";
-import { getNested } from "../utils/NestedPath";
 
 const ALL_EVENT_TYPES: EventType[] = ["open", "modify", "rename", "bulk"];
 const FORBIDDEN_EVENTS: Record<string, EventType[]> = {
 	lastModified: ["modify"],
 };
 const FIXED_EVENTS_FIELDS = new Set(["noteId", "dateCreated"]);
-
-const DEFAULT_GROUP: Record<string, string> = {
-	noteId: "note",
-	noteType: "note",
-	fileName: "note",
-	filePath: "note",
-	dateCreated: "dates",
-	lastModified: "dates",
-	lastMoved: "dates",
-};
 
 const CONDITION_TYPES: ConditionType[] = [
 	"always",
@@ -74,7 +62,7 @@ export class FieldListComponent {
 		groupsRow.createSpan({ text: "YAML-Groups:", cls: "md-butler-field-id" });
 		new TextComponent(groupsRow)
 			.setValue(this.plugin.settings.yamlGroups.join(", "))
-			.setPlaceholder("comma-sep. group names")
+			.setPlaceholder("Comma-sep. Group names")
 			.onChange(async (value) => {
 				this.plugin.settings.yamlGroups = value.split(/[,\n]+/).map(s => s.trim()).filter(Boolean);
 				await this.plugin.saveSettings();
@@ -89,47 +77,53 @@ export class FieldListComponent {
 		const fileBtn = fileRow.createEl("button", {
 			text: "📁",
 			cls: "md-butler-file-btn",
-			attr: { title: "Gruppen aus .md-Datei importieren" }
+			attr: { title: "Gruppen aus .md-datei importieren" }
 		});
-		const statusText = fileRow.createSpan({
+		fileRow.createSpan({
 			text: this.plugin.settings.groupFile ? `(from: ${this.plugin.settings.groupFile})` : ""
 		});
 		if (this.plugin.settings.groupFile) {
 			const clearBtn = fileRow.createEl("button", {
 				text: "✕",
 				cls: "md-butler-clear-btn",
-				attr: { title: "Group-Datei-Referenz entfernen" }
+				attr: { title: "Group-datei-referenz entfernen" }
 			});
-			clearBtn.addEventListener("click", async () => {
-				this.plugin.settings.groupFile = undefined;
-				await this.plugin.saveSettings();
-				this.render();
+			clearBtn.addEventListener("click", () => {
+				void (async () => {
+					this.plugin.settings.groupFile = undefined;
+					await this.plugin.saveSettings();
+					this.render();
+				})();
 			});
 		}
-		fileBtn.addEventListener("click", async () => {
-			new FileSuggestModal(this.plugin.app, async (file: TFile) => {
-				this.plugin.settings.groupFile = file.path;
-				let items: string[] = [];
-				const fm = this.plugin.app.metadataCache.getFileCache(file)?.frontmatter;
-				if (fm?.groups && Array.isArray(fm.groups)) {
-					items = fm.groups.map(String);
-				} else {
-					try {
-						const content = await this.plugin.app.vault.read(file);
-						items = content
-							.split("\n")
-							.map(l => l.trim())
-							.filter(l => l.length > 0 && !l.startsWith("---"));
-					} catch { /* silent */ }
-				}
-				for (const g of items) {
-					if (!this.plugin.settings.yamlGroups.includes(g)) {
-						this.plugin.settings.yamlGroups.push(g);
-					}
-				}
-				await this.plugin.saveSettings();
-				this.render();
-			}).open();
+		fileBtn.addEventListener("click", () => {
+			void (async () => {
+				new FileSuggestModal(this.plugin.app, (file: TFile) => {
+					void (async () => {
+						this.plugin.settings.groupFile = file.path;
+						let items: string[] = [];
+						const fm = this.plugin.app.metadataCache.getFileCache(file)?.frontmatter;
+						if (fm?.groups && Array.isArray(fm.groups)) {
+							items = fm.groups.map(String);
+						} else {
+							try {
+								const content = await this.plugin.app.vault.read(file);
+								items = content
+									.split("\n")
+									.map(l => l.trim())
+									.filter(l => l.length > 0 && !l.startsWith("---"));
+							} catch { /* silent */ }
+						}
+						for (const g of items) {
+							if (!this.plugin.settings.yamlGroups.includes(g)) {
+								this.plugin.settings.yamlGroups.push(g);
+							}
+						}
+						await this.plugin.saveSettings();
+						this.render();
+					})();
+				}).open();
+			})();
 		});
 
 		const groups = this.plugin.settings.yamlGroups;
@@ -179,10 +173,10 @@ export class FieldListComponent {
 			const restKey = knownGroup ? field.yamlKey.slice(dotIdx + 1) : field.yamlKey;
 
 			if (GROUP_LOCKED_FIELDS.has(field.id)) {
-				yamlContainer.createSpan({ text: "(none)", cls: "md-butler-field-id" });
+				yamlContainer.createSpan({ text: "(None)", cls: "md-butler-field-id" });
 			} else {
 				new DropdownComponent(yamlContainer)
-					.addOption("(none)", "(none)")
+					.addOption("(none)", "(None)")
 					.addOptions(Object.fromEntries(groups.map(g => [g, g])))
 					.setValue(currentGroup)
 					.onChange(async (group) => {
@@ -197,7 +191,7 @@ export class FieldListComponent {
 
 			new TextComponent(yamlContainer)
 				.setValue(restKey)
-				.setPlaceholder("key")
+				.setPlaceholder("Key")
 				.onChange(async (value) => {
 					const currentKey = field.yamlKey ?? "";
 					const prefix = currentKey.includes(".") ? currentKey.split(".")[0]! : null;
@@ -209,11 +203,11 @@ export class FieldListComponent {
 			/* Type Dropdown */
 			const typeContainer = row.createDiv();
 			new DropdownComponent(typeContainer)
-				.addOption("text", "text")
-				.addOption("select", "select")
-				.addOption("boolean", "boolean")
-				.addOption("number", "number")
-				.addOption("multi", "multi")
+				.addOption("text", "Text")
+				.addOption("select", "Select")
+				.addOption("boolean", "Boolean")
+				.addOption("number", "Number")
+				.addOption("multi", "Multi")
 				.setValue(field.type ?? "text")
 				.onChange(async (v) => {
 					field.type = v as FieldType;
@@ -235,7 +229,7 @@ export class FieldListComponent {
 				const optContainer = row.createDiv();
 				new TextComponent(optContainer)
 					.setValue(field.options?.join("\n") ?? "")
-					.setPlaceholder("comma-sep. or one per line")
+					.setPlaceholder("Comma-sep. Or one per line")
 					.onChange(async (value) => {
 						field.options = value.split(/[,\n]+/).map(s => s.trim()).filter(Boolean);
 						await this.plugin.saveSettings();
@@ -246,38 +240,44 @@ export class FieldListComponent {
 				const fileBtn = fileRow.createEl("button", {
 					text: "📁",
 					cls: "md-butler-file-btn",
-					attr: { title: "Options aus .md-Datei laden" }
+					attr: { title: "Options aus .md-datei laden" }
 				});
-				const statusText = fileRow.createSpan({
+				fileRow.createSpan({
 					text: field.optionsFile ? `(from: ${field.optionsFile})` : ""
 				});
 				if (field.optionsFile) {
 					const clearFileBtn = fileRow.createEl("button", {
 						text: "✕",
 						cls: "md-butler-clear-btn",
-						attr: { title: "Options-Datei entfernen" }
+						attr: { title: "Options-datei entfernen" }
 					});
-					clearFileBtn.addEventListener("click", async () => {
-						field.optionsFile = undefined;
-						field.options = [];
-						await this.plugin.saveSettings();
-						this.render();
+					clearFileBtn.addEventListener("click", () => {
+						void (async () => {
+							field.optionsFile = undefined;
+							field.options = [];
+							await this.plugin.saveSettings();
+							this.render();
+						})();
 					});
 				}
-				fileBtn.addEventListener("click", async () => {
-					new FileSuggestModal(this.plugin.app, async (file: TFile) => {
-						field.optionsFile = file.path;
-						await loadOptionsFromFile(field, this.plugin.app);
-						await this.plugin.saveSettings();
-						this.render();
-					}).open();
+				fileBtn.addEventListener("click", () => {
+					void (async () => {
+						new FileSuggestModal(this.plugin.app, (file: TFile) => {
+							void (async () => {
+								field.optionsFile = file.path;
+								await loadOptionsFromFile(field, this.plugin.app);
+								await this.plugin.saveSettings();
+								this.render();
+							})();
+						}).open();
+					})();
 				});
 
 				/* DataviewJS Button + Query (select) */
 				const dvBtn = fileRow.createEl("button", {
 					text: "📊",
 					cls: "md-butler-dataview-btn",
-					attr: { title: "Optionen per DataviewJS generieren" }
+					attr: { title: "Optionen per dataviewjs generieren" }
 				});
 				let dvExpanded = false;
 				const dvContainer = row.createDiv({
@@ -290,7 +290,7 @@ export class FieldListComponent {
 				const dvTextarea = new TextComponent(dvContainer);
 				dvTextarea
 					.setValue(field.optionsDataview ?? "")
-					.setPlaceholder("dv.pages()...")
+					.setPlaceholder("Dv.pages()...")
 					.onChange(async (v) => {
 						field.optionsDataview = v.trim() || undefined;
 						await this.plugin.saveSettings();
@@ -300,10 +300,12 @@ export class FieldListComponent {
 					text: "▶ Ausführen",
 					cls: "md-butler-exec-btn",
 				});
-				execBtn.addEventListener("click", async () => {
-					await executeDataviewForField(field, this.plugin.app);
-					await this.plugin.saveSettings();
-					this.render();
+				execBtn.addEventListener("click", () => {
+					void (async () => {
+						await executeDataviewForField(field, this.plugin.app);
+						await this.plugin.saveSettings();
+						this.render();
+					})();
 				});
 
 				/* Default Value (select fields) */
@@ -320,7 +322,7 @@ export class FieldListComponent {
 				const tmplContainer = row.createDiv();
 				const opts = field.options ?? [];
 				const tmplDropdown = new DropdownComponent(tmplContainer);
-				tmplDropdown.addOption("", "(none)");
+				tmplDropdown.addOption("", "(None)");
 				for (const o of opts) {
 					tmplDropdown.addOption(o, o);
 				}
@@ -336,7 +338,7 @@ export class FieldListComponent {
 				const optContainer = row.createDiv();
 				new TextComponent(optContainer)
 					.setValue(field.options?.join("\n") ?? "")
-					.setPlaceholder("comma-sep. or one per line")
+					.setPlaceholder("Comma-sep. Or one per line")
 					.onChange(async (value) => {
 						field.options = value.split(/[,\n]+/).map(s => s.trim()).filter(Boolean);
 						await this.plugin.saveSettings();
@@ -347,36 +349,42 @@ export class FieldListComponent {
 				const fileBtn = fileRow.createEl("button", {
 					text: "📁",
 					cls: "md-butler-file-btn",
-					attr: { title: "Options aus .md-Datei laden" }
+					attr: { title: "Options aus .md-datei laden" }
 				});
-				const statusText = fileRow.createSpan({
+				fileRow.createSpan({
 					text: field.optionsFile ? `(from: ${field.optionsFile})` : ""
 				});
 				if (field.optionsFile) {
 					const clearFileBtn = fileRow.createEl("button", {
 						text: "✕",
 						cls: "md-butler-clear-btn",
-						attr: { title: "Options-Datei entfernen" }
+						attr: { title: "Options-datei entfernen" }
 					});
-					clearFileBtn.addEventListener("click", async () => {
-						field.optionsFile = undefined;
-						field.options = [];
-						await this.plugin.saveSettings();
-						this.render();
+					clearFileBtn.addEventListener("click", () => {
+						void (async () => {
+							field.optionsFile = undefined;
+							field.options = [];
+							await this.plugin.saveSettings();
+							this.render();
+						})();
 					});
 				}
-				fileBtn.addEventListener("click", async () => {
-					new FileSuggestModal(this.plugin.app, async (file: TFile) => {
-						field.optionsFile = file.path;
-						await loadOptionsFromFile(field, this.plugin.app);
-						await this.plugin.saveSettings();
-						this.render();
-					}).open();
+				fileBtn.addEventListener("click", () => {
+					void (async () => {
+						new FileSuggestModal(this.plugin.app, (file: TFile) => {
+							void (async () => {
+								field.optionsFile = file.path;
+								await loadOptionsFromFile(field, this.plugin.app);
+								await this.plugin.saveSettings();
+								this.render();
+							})();
+						}).open();
+					})();
 				});
 				const dvBtn = fileRow.createEl("button", {
 					text: "📊",
 					cls: "md-butler-dataview-btn",
-					attr: { title: "Optionen per DataviewJS generieren" }
+					attr: { title: "Optionen per dataviewjs generieren" }
 				});
 				let dvExpanded = false;
 				const dvContainer = row.createDiv({
@@ -389,7 +397,7 @@ export class FieldListComponent {
 				const dvTextarea = new TextComponent(dvContainer);
 				dvTextarea
 					.setValue(field.optionsDataview ?? "")
-					.setPlaceholder("dv.pages()...")
+					.setPlaceholder("Dv.pages()...")
 					.onChange(async (v) => {
 						field.optionsDataview = v.trim() || undefined;
 						await this.plugin.saveSettings();
@@ -399,17 +407,19 @@ export class FieldListComponent {
 					text: "▶ Ausführen",
 					cls: "md-butler-exec-btn",
 				});
-				execBtn.addEventListener("click", async () => {
-					await executeDataviewForField(field, this.plugin.app);
-					await this.plugin.saveSettings();
-					this.render();
+				execBtn.addEventListener("click", () => {
+					void (async () => {
+						await executeDataviewForField(field, this.plugin.app);
+						await this.plugin.saveSettings();
+						this.render();
+					})();
 				});
 
 				/* Default Value (multi) */
 				const defContainer = row.createDiv();
 				new TextComponent(defContainer)
 					.setValue(field.defaultValue ?? "")
-					.setPlaceholder("Default: A, B, C")
+					.setPlaceholder("Default: A, b, c")
 					.onChange(async (value) => {
 						field.defaultValue = value.trim() || undefined;
 						await this.plugin.saveSettings();
@@ -429,9 +439,9 @@ export class FieldListComponent {
 				/* Default Value (boolean) */
 				const defContainer = row.createDiv();
 				new DropdownComponent(defContainer)
-					.addOption("", "(none)")
-					.addOption("true", "true")
-					.addOption("false", "false")
+					.addOption("", "(None)")
+					.addOption("true", "True")
+					.addOption("false", "False")
 					.setValue(field.defaultValue ?? "")
 					.onChange(async (v) => {
 						field.defaultValue = v || undefined;
@@ -545,8 +555,7 @@ export class FieldListComponent {
 				for (const et of ALL_EVENT_TYPES) {
 					if (forbidden.includes(et)) continue;
 					const label = eventsContainer.createEl("label");
-					label.style.marginRight = "12px";
-					label.style.cursor = "pointer";
+					label.addClass("md-butler-event-label");
 					const cb = label.createEl("input", {
 						attr: { type: "checkbox" },
 					});
@@ -558,7 +567,7 @@ export class FieldListComponent {
 						} else if (!cb.checked && cur.includes(et)) {
 							field.events = cur.filter((e) => e !== et);
 						}
-						this.plugin.saveSettings();
+						void this.plugin.saveSettings();
 					});
 					label.appendText(` ${et}`);
 				}
@@ -618,7 +627,7 @@ export class FieldListComponent {
 				});
 
 				const fmKeyInput = new TextComponent(conditionBody);
-				fmKeyInput.setPlaceholder("frontmatter key");
+				fmKeyInput.setPlaceholder("Frontmatter key");
 				const opDropdown = new DropdownComponent(
 					conditionBody
 				);
@@ -626,7 +635,7 @@ export class FieldListComponent {
 					opDropdown.addOption(o, o);
 				}
 				const valInput = new TextComponent(conditionBody);
-				valInput.setPlaceholder("value");
+				valInput.setPlaceholder("Value");
 
 				const renderConditionUI = () => {
 					const isFm =
@@ -686,7 +695,7 @@ export class FieldListComponent {
 				const defaultContainer = row.createDiv();
 				new TextComponent(defaultContainer)
 					.setValue(field.defaultValue ?? "")
-					.setPlaceholder("default")
+					.setPlaceholder("Default")
 					.onChange(async (value) => {
 						field.defaultValue =
 							value.trim() || undefined;
@@ -720,13 +729,15 @@ export class FieldListComponent {
 					text: "✕",
 					cls: "md-butler-delete-btn",
 				});
-				deleteBtn.addEventListener("click", async () => {
-					this.plugin.settings.fields =
-						this.plugin.settings.fields.filter(
-							(f) => f !== field
-						);
-					await this.plugin.saveSettings();
-					this.render();
+				deleteBtn.addEventListener("click", () => {
+					void (async () => {
+						this.plugin.settings.fields =
+							this.plugin.settings.fields.filter(
+								(f) => f !== field
+							);
+						await this.plugin.saveSettings();
+						this.render();
+					})();
 				});
 			}
 
@@ -757,54 +768,58 @@ export class FieldListComponent {
 			});
 
 			/* DROP */
-			row.addEventListener("drop", async (event) => {
-				event.preventDefault();
-				row.classList.remove("drag-over");
-				const fromIndex = Number(
-					event.dataTransfer?.getData("text/plain")
-				);
-				const toIndex = index;
-				if (
-					Number.isNaN(fromIndex) ||
-					fromIndex === toIndex
-				) {
-					return;
-				}
-				await this.moveField(fromIndex, toIndex);
+			row.addEventListener("drop", (event) => {
+				void (async () => {
+					event.preventDefault();
+					row.classList.remove("drag-over");
+					const fromIndex = Number(
+						event.dataTransfer?.getData("text/plain")
+					);
+					const toIndex = index;
+					if (
+						Number.isNaN(fromIndex) ||
+						fromIndex === toIndex
+					) {
+						return;
+					}
+					await this.moveField(fromIndex, toIndex);
+				})();
 			});
 		});
 
 		/* Add Field Button */
 		const addBtn = this.containerEl.createEl("button", {
-			text: "+ Add Field",
+			text: "+ add field",
 			cls: "md-butler-add-field-btn",
 		});
-		addBtn.addEventListener("click", async () => {
-			const existing = this.plugin.settings.fields;
-			const maxOrder = existing.reduce(
-				(max, f) => Math.max(max, f.order),
-				-1
-			);
-			let counter = 0;
-			let newId = "customField";
-			while (existing.some((f) => f.id === newId)) {
-				counter++;
-				newId = `customField${counter}`;
-			}
-			const newField: MetadataFieldConfig = {
-				id: newId,
-				yamlKey:
-					newId.charAt(0).toUpperCase() +
-					newId.slice(1),
-				enabled: true,
-				order: maxOrder + 1,
-				defaultValue: "",
-				events: [...ALL_EVENT_TYPES],
-				isCustom: true,
-			};
-			existing.push(newField);
-			await this.plugin.saveSettings();
-			this.render();
+		addBtn.addEventListener("click", () => {
+			void (async () => {
+				const existing = this.plugin.settings.fields;
+				const maxOrder = existing.reduce(
+					(max, f) => Math.max(max, f.order),
+					-1
+				);
+				let counter = 0;
+				let newId = "customField";
+				while (existing.some((f) => f.id === newId)) {
+					counter++;
+					newId = `customField${counter}`;
+				}
+				const newField: MetadataFieldConfig = {
+					id: newId,
+					yamlKey:
+						newId.charAt(0).toUpperCase() +
+						newId.slice(1),
+					enabled: true,
+					order: maxOrder + 1,
+					defaultValue: "",
+					events: [...ALL_EVENT_TYPES],
+					isCustom: true,
+				};
+				existing.push(newField);
+				await this.plugin.saveSettings();
+				this.render();
+			})();
 		});
 	}
 

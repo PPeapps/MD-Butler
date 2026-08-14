@@ -56,3 +56,91 @@ If your plugin does not need CSS, delete this file.
 .md-butler-copy-btn {
 	margin-bottom: 1em;
 }
+
+.md-butler-full-width {
+	width: 100%;
+}
+
+.md-butler-mt-05 {
+	margin-top: 0.5em;
+}
+
+.md-butler-mt-1 {
+	margin-top: 1em;
+}
+
+.md-butler-ml-1 {
+	margin-left: 1em;
+}
+
+.md-butler-warn {
+	color: var(--color-orange, #ff9800);
+}
+
+.md-butler-bold {
+	font-weight: bold;
+}
+
+.md-butler-pointer {
+	cursor: pointer;
+}
+
+.md-butler-event-label {
+	margin-right: 12px;
+	cursor: pointer;
+}
+
+.md-butler-standardize-file {
+	margin-left: 1em;
+	margin-top: 0.4em;
+	margin-bottom: 0.4em;
+	padding: 0.3em;
+	border-left: 2px solid var(--background-modifier-border);
+}
+
+.md-butler-standardize-path {
+	font-size: 0.9em;
+	opacity: 0.8;
+}
+
+.md-butler-standardize-row {
+	margin-left: 0.5em;
+	margin-top: 0.3em;
+	margin-bottom: 0.3em;
+}
+
+.md-butler-bad-value {
+	color: var(--color-red, #f44336);
+}
+
+.md-butler-select-ml {
+	margin-left: 0.3em;
+}
+
+.md-butler-warn-text {
+	color: var(--color-orange, #ff9800);
+	font-size: 0.85em;
+	margin-left: 0.5em;
+}
+
+.md-butler-hidden {
+	display: none;
+}
+
+.md-butler-green {
+	color: var(--color-green, #4caf50);
+}
+
+.md-butler-red {
+	color: var(--color-red, #f44336);
+}
+
+.md-butler-orange {
+	color: var(--color-orange, #ff9800);
+}
+
+.md-butler-issue-text {
+	margin-left: 1em;
+	margin-top: 0.3em;
+	margin-bottom: 0.3em;
+}

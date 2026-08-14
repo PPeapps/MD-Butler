@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.0.4 (2026-08-14) — maintenance update
+
+### Fixes
+- **`newOnly` fills empty fields (MD-001)** — `processingMode: newOnly` now also fills fields that exist but are empty (e.g. `Note.UUID: `). Existing, non-empty values are still never overwritten.
+- **Author metadata corrected (MD-005)** — `manifest.json` now uses `author: PPeapps` with `authorUrl`; empty `fundingUrl` removed (Obsidian submission requirement); README clone URL points to `https://github.com/PPeapps/MD-Butler`.
+
+### New
+- **`{{folder}}` template variable (MD-003)** — New alias for `{{fileFolder}}` that resolves to the parent folder path without the file name (e.g. `2_PROJECTS/a_Ongoing` instead of `2_PROJECTS/a_Ongoing/My Note.md`).
+
+### Internal
+- **ESLint cleanup** — 283 lint messages from `eslint-plugin-obsidianmd` fixed (no-static-styles-assignment, no-explicit-any / no-unsafe-*, sentence-case, no-misused-promises, no-manual-html-headings, …). `eslint src`, `tsc -noEmit -skipLibCheck`, and `npm run build` are green.
+
+---
+
 ## 1.0.3 (2026-07-27)
 
 ### Fixes

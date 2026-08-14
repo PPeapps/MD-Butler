@@ -20,7 +20,7 @@ export class BatchFlusher {
 			}).finally(() => {
 				this.isFlushing = false;
 			});
-		}, delay) as unknown as number;
+		}, delay);
 	}
 
 	cancel(): void {

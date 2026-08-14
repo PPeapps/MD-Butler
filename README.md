@@ -13,7 +13,7 @@
 - **Template system**: Powerful `{{template}}` expressions with pipe-chain functions (`{{title | upper | replace:a,b}}`)
   - Date formatting: `{{date:YYYY-MM-DD}}`, `{{now+7d}}`
   - Frontmatter access: `{{frontmatter:key}}`
-  - File properties: `{{title}}`, `{{fileName}}`, `{{filePath}}`, `{{oldPath}}`, `{{oldName}}`, `{{oldFolder}}`
+  - File properties: `{{title}}`, `{{fileName}}`, `{{fileFolder}}` (alias `{{folder}}`), `{{filePath}}`, `{{oldPath}}`, `{{oldName}}`, `{{oldFolder}}`
   - Pipe functions: `upper`, `lower`, `trim`, `replace:X,Y`, `default:VAL`, `substr:S,E`, `date:FMT`
 - **Conditional fields**: Apply fields only when conditions are met (frontmatter, path, filename, or folder rules). Auto-removes the YAML key when the condition no longer matches
 - **Event binding**: Per-field event checkboxes (open, modify, rename, bulk)
@@ -121,7 +121,7 @@ Use `if-exists` for fields that are only set under certain circumstances and sho
 {{now-1w}}                       → 2026-06-10 (relative date, supports d/w/M/y)
 {{title}}                        → File name without extension
 {{fileName}}                     → File name with extension
-{{fileFolder}}                   → Parent folder path
+{{fileFolder}}                   → Parent folder path (alias: {{folder}})
 {{filePath}}                     → Full vault path
 {{oldPath}}                      → Previous path (rename events only)
 {{oldFolder}}                    → Previous folder (rename events only)
@@ -152,7 +152,7 @@ Fields with conditions are **auto-removed** from frontmatter when their conditio
 
 ```bash
 # Clone the repo
-git clone https://github.com/PPeter/md-butler
+git clone https://github.com/PPeapps/MD-Butler
 cd md-butler
 
 # Install dependencies

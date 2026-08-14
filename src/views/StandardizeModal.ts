@@ -1,4 +1,4 @@
-import { Modal, Notice, TFile } from "obsidian";
+import { App, Modal, Notice, TFile } from "obsidian";
 import { ValueIssue } from "../services/ConsistencyChecker";
 import {
 	StandardizerService,
@@ -12,7 +12,7 @@ export class StandardizeModal extends Modal {
 	private applyBtn!: HTMLButtonElement;
 
 	constructor(
-		app: any,
+		app: App,
 		private issues: ValueIssue[],
 		private standardizer: StandardizerService,
 		private protectedKeys: string[]
@@ -24,7 +24,7 @@ export class StandardizeModal extends Modal {
 		const { contentEl } = this;
 		contentEl.empty();
 
-		contentEl.createEl("h2", { text: "Standardize Field Values" });
+		contentEl.createEl("h2", { text: "Standardize field values" });
 		contentEl.createEl("p", {
 			text: `Found ${this.issues.length} value issue${this.issues.length !== 1 ? "s" : ""}. Select the correct value for each issue below.`,
 		});
@@ -38,8 +38,8 @@ export class StandardizeModal extends Modal {
 			const summary = fieldSection.createEl("summary", {
 				text: `${yamlKey} (${issues.length})`,
 			});
-			summary.style.fontWeight = "bold";
-			summary.style.cursor = "pointer";
+			summary.addClass("md-butler-bold");
+			summary.addClass("md-butler-pointer");
 
 			// Group issues within this field by file
 			const byFile = this.groupByFile(issues);
@@ -48,36 +48,28 @@ export class StandardizeModal extends Modal {
 			);
 			for (const [filePath, fileIssues] of sortedFiles) {
 				const fileSection = fieldSection.createEl("div");
-				fileSection.style.marginLeft = "1em";
-				fileSection.style.marginTop = "0.4em";
-				fileSection.style.marginBottom = "0.4em";
-				fileSection.style.padding = "0.3em";
-				fileSection.style.borderLeft =
-					"2px solid var(--background-modifier-border)";
+				fileSection.addClass("md-butler-standardize-file");
 
 				const pathEl = fileSection.createEl("span", {
 					text: filePath,
 				});
-				pathEl.style.fontSize = "0.9em";
-				pathEl.style.opacity = "0.8";
+				pathEl.addClass("md-butler-standardize-path");
 
 				for (const issue of fileIssues) {
 					const row = fileSection.createEl("div");
-					row.style.marginLeft = "0.5em";
-					row.style.marginTop = "0.3em";
-					row.style.marginBottom = "0.3em";
+					row.addClass("md-butler-standardize-row");
 
-					const currentEl = row.createEl("span", {
+					row.createEl("span", {
 						text: `✕ `,
 					});
 					const bad = row.createEl("code", {
 						text: `"${issue.currentValue}"`,
 					});
-					bad.style.color = "var(--color-red, #f44336)";
+					bad.addClass("md-butler-bad-value");
 					row.createEl("span", { text: " → " });
 
 					const select = row.createEl("select");
-					select.style.marginLeft = "0.3em";
+					select.addClass("md-butler-select-ml");
 
 					const skipOpt = select.createEl("option", {
 						text: "Skip",
@@ -92,10 +84,8 @@ export class StandardizeModal extends Modal {
 					}
 
 					const warnEl = row.createEl("span");
-					warnEl.style.color = "var(--color-orange, #ff9800)";
-					warnEl.style.fontSize = "0.85em";
-					warnEl.style.marginLeft = "0.5em";
-					warnEl.style.display = "none";
+					warnEl.addClass("md-butler-warn-text");
+					warnEl.addClass("md-butler-hidden");
 					warnEl.setText("⚠ Already exists → will be removed");
 
 					select.addEventListener("change", () => {
@@ -107,7 +97,7 @@ export class StandardizeModal extends Modal {
 								select.value,
 								issue.fieldType
 							);
-						warnEl.style.display = isDup ? "inline" : "none";
+						warnEl.toggleClass("md-butler-hidden", !isDup);
 						this.updateFix(
 							issue.file.path,
 							issue.yamlKey,
@@ -125,10 +115,10 @@ export class StandardizeModal extends Modal {
 		this.applyBtn = contentEl.createEl("button", {
 			text: "Apply 0 changes",
 		});
-		this.applyBtn.style.marginTop = "1em";
+		this.applyBtn.addClass("md-butler-mt-1");
 		this.applyBtn.disabled = true;
-		this.applyBtn.addEventListener("click", async () => {
-			await this.onApply();
+		this.applyBtn.addEventListener("click", () => {
+			void this.onApply();
 		});
 	}
 
@@ -244,7 +234,7 @@ export class StandardizeModal extends Modal {
 		if (fieldType !== "multi" || !selectedValue) return false;
 		const cache = this.app.metadataCache.getFileCache(file);
 		const fm = cache?.frontmatter ?? {};
-		const raw = getNested(fm, yamlKey);
+		const raw: unknown = getNested(fm, yamlKey);
 
 		if (Array.isArray(raw)) {
 			return raw.some(

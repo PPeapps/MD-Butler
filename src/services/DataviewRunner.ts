@@ -1,17 +1,29 @@
 import { App, Notice } from "obsidian";
 import { MetadataFieldConfig } from "../types/MetadataField";
 
+interface DataviewApi {
+	pages(source?: string): unknown;
+}
+
+function getDataviewApi(app: App): DataviewApi {
+	const plugins = (app as unknown as { plugins?: { plugins?: Record<string, unknown> } }).plugins;
+	const dataview = plugins?.plugins?.dataview;
+	const api = (dataview as { api?: unknown } | undefined)?.api;
+	if (!dataview || !api) {
+		throw new Error("Dataview plugin not found.");
+	}
+	return api as DataviewApi;
+}
+
 export async function executeDataviewQuery(
 	code: string,
 	app: App
 ): Promise<string[]> {
-	const dvApi = (app as any).plugins?.plugins?.dataview?.api;
-	if (!dvApi) {
-		throw new Error("Dataview plugin not found.");
-	}
+	const dvApi = getDataviewApi(app);
 
-	const fn = new Function("dv", "return " + code);
-	const result = fn(dvApi);
+	// eslint-disable-next-line @typescript-eslint/no-implied-eval
+	const fn = new Function("dv", "return " + code) as (dv: unknown) => unknown;
+	const result: unknown = fn(dvApi);
 
 	if (result instanceof Promise) {
 		return processResult(await result);
@@ -33,17 +45,38 @@ function toArray(result: unknown): unknown[] {
 		return result;
 	}
 
-	try {
-		return Array.from(result as Iterable<unknown>);
-	} catch {}
+	const iterable = tryIterable(result);
+	if (iterable !== null) {
+		return iterable;
+	}
 
-	if (typeof result === "object" && typeof (result as any).array === "function") {
-		return (result as any).array();
+	if (typeof result === "object" && result !== null) {
+		const withArray = result as { array?: unknown };
+		if (typeof withArray.array === "function") {
+			const arr = (withArray.array as () => unknown[])();
+			return arr ?? [];
+		}
 	}
 
 	throw new Error(
-		`Query result is not an array (type: ${typeof result}, constructor: ${(result as any)?.constructor?.name ?? "unknown"}).`
+		`Query result is not an array (type: ${typeof result}, constructor: ${getConstructorName(result)}).`
 	);
+}
+
+function tryIterable(result: unknown): unknown[] | null {
+	if (typeof (result as { [Symbol.iterator]?: unknown })[Symbol.iterator] !== "function") {
+		return null;
+	}
+	try {
+		return Array.from(result as Iterable<unknown>);
+	} catch {
+		return null;
+	}
+}
+
+function getConstructorName(result: unknown): string {
+	const ctor = (result as { constructor?: { name?: string } }).constructor;
+	return ctor?.name ?? "unknown";
 }
 
 export async function executeDataviewForField(

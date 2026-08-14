@@ -23,13 +23,13 @@ export class StandardizerService {
 			const file = this.app.vault.getAbstractFileByPath(filePath);
 			if (!(file instanceof TFile)) continue;
 
-			await this.app.fileManager.processFrontMatter(file, (fm) => {
+			await this.app.fileManager.processFrontMatter(file, (fm: Record<string, unknown>) => {
 				for (const fix of fixes) {
 					if (protectedKeys.includes(fix.yamlKey)) continue;
 					if (!hasNested(fm, fix.yamlKey)) continue;
 
 					if (fix.fieldType === "multi") {
-						const raw = getNested(fm, fix.yamlKey);
+						const raw: unknown = getNested(fm, fix.yamlKey);
 						if (Array.isArray(raw)) {
 							const arr = raw as string[];
 							const idx = arr.findIndex(
@@ -48,7 +48,7 @@ export class StandardizerService {
 								totalChanges++;
 							}
 						} else if (typeof raw === "string") {
-							const parts = (raw as string)
+							const parts = raw
 								.split(",")
 								.map((s) => s.trim());
 							const idx = parts.findIndex(

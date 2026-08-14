@@ -2,7 +2,7 @@
  * Modal showing bulk-update progress with a cancel button.
  * Updates are throttled (every 50 files) to avoid UI jank.
  */
-import { Modal } from "obsidian";
+import { App, Modal } from "obsidian";
 
 export class BulkProgressModal extends Modal {
 	private progressEl!: HTMLElement;
@@ -10,7 +10,7 @@ export class BulkProgressModal extends Modal {
 	private _cancelled = false;
 
 	constructor(
-		app: any,
+		app: App,
 		private total: number,
 		private onCancel: () => void
 	) {
@@ -20,7 +20,7 @@ export class BulkProgressModal extends Modal {
 	onOpen() {
 		const { contentEl } = this;
 		contentEl.empty();
-		contentEl.createEl("h2", { text: "Bulk Metadata Update" });
+		contentEl.createEl("h2", { text: "Bulk metadata update" });
 		this.progressEl = contentEl.createEl("p", {
 			text: `Processing 0 / ${this.total} files`,
 		});

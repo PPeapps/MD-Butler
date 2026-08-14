@@ -20,19 +20,22 @@ export class MetadataButlerSettingTab extends PluginSettingTab {
 	}
 
 	display(): void {
+		this.render();
+	}
+
+	private render(): void {
 		const { containerEl } = this;
 		containerEl.empty();
 
 		/* ── Date & Processing ──────────────────────────── */
 
 		new Setting(containerEl)
-			.setName("Date Format")
+			.setName("Date format")
 			.setDesc("Moment.js format used for all metadata dates")
 			.addText((text) =>
 				text
-					.setPlaceholder("YYYY-MM-DD ddd HH:mm:ss")
-					.setValue(this.plugin.settings.dateFormat)
-					.onChange(async (value) => {
+					.setPlaceholder("Yyyy-mm-dd ddd hh:mm:ss")
+					.setValue(this.plugin.settings.dateFormat)					.onChange(async (value) => {
 						this.plugin.settings.dateFormat =
 							value.trim();
 						await this.plugin.saveSettings();
@@ -40,9 +43,9 @@ export class MetadataButlerSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName("Processing Mode")
+			.setName("Processing mode")
 			.setDesc(
-				"newOnly: only process notes without DateCreated. allFiles: process all notes."
+				"Newonly: only process notes without datecreated. Allfiles: process all notes."
 			)
 			.addDropdown((dropdown) =>
 				dropdown
@@ -60,7 +63,7 @@ export class MetadataButlerSettingTab extends PluginSettingTab {
 
 		/* ── Metadata Fields ────────────────────────────── */
 
-		containerEl.createEl("h3", { text: "Metadata Fields" });
+		new Setting(containerEl).setName("Metadata fields").setHeading();
 
 		const fieldContainer = containerEl.createDiv(
 			"md-butler-field-container"
@@ -78,7 +81,7 @@ export class MetadataButlerSettingTab extends PluginSettingTab {
 		/* ── Folder Filter ──────────────────────────────── */
 
 		new Setting(containerEl)
-			.setName("Folder Filter Mode")
+			.setName("Folder filter mode")
 			.setDesc(
 				"Exclude: skip files in the listed folders. Include: only process files in the listed folders."
 			)
@@ -91,7 +94,7 @@ export class MetadataButlerSettingTab extends PluginSettingTab {
 						this.plugin.settings.filterMode =
 							value as FilterMode;
 						await this.plugin.saveSettings();
-						this.display();
+						this.render();
 					})
 			);
 
@@ -100,7 +103,7 @@ export class MetadataButlerSettingTab extends PluginSettingTab {
 		const isExcludeActive =
 			this.plugin.settings.filterMode === "exclude";
 
-		containerEl.createEl("h3", { text: "Excluded Folders" });
+		new Setting(containerEl).setName("Excluded folders").setHeading();
 
 		new Setting(containerEl)
 			.setName("Excluded folders")
@@ -109,14 +112,13 @@ export class MetadataButlerSettingTab extends PluginSettingTab {
 			)
 			.addTextArea((text) => {
 				text.setPlaceholder(
-					"Templates\nArchive\nJournal/Daily"
+					"Templates\narchive\njournal/daily"
 				)
 					.setValue(
 						this.plugin.settings.excludedFolders.join(
 							"\n"
 						)
-					)
-					.onChange(async (value) => {
+					)					.onChange(async (value) => {
 						this.plugin.settings.excludedFolders =
 							value
 								.split("\n")
@@ -142,8 +144,8 @@ export class MetadataButlerSettingTab extends PluginSettingTab {
 									current.push(folder);
 									this.plugin.settings.excludedFolders =
 										current;
-									this.plugin.saveSettings();
-									this.display();
+									void this.plugin.saveSettings();
+									this.render();
 								}
 							}
 						).open();
@@ -155,7 +157,7 @@ export class MetadataButlerSettingTab extends PluginSettingTab {
 		const isIncludeActive =
 			this.plugin.settings.filterMode === "include";
 
-		containerEl.createEl("h3", { text: "Included Folders" });
+		new Setting(containerEl).setName("Included folders").setHeading();
 
 		new Setting(containerEl)
 			.setName("Included folders")
@@ -163,7 +165,7 @@ export class MetadataButlerSettingTab extends PluginSettingTab {
 				"One folder per line. Use * as wildcard to include all folders."
 			)
 			.addTextArea((text) => {
-				text.setPlaceholder("Notes\nProjects\n*")
+				text.setPlaceholder("Notes\nprojects\n*")
 					.setValue(
 						this.plugin.settings.includedFolders.join(
 							"\n"
@@ -195,8 +197,8 @@ export class MetadataButlerSettingTab extends PluginSettingTab {
 									current.push(folder);
 									this.plugin.settings.includedFolders =
 										current;
-									this.plugin.saveSettings();
-									this.display();
+									void this.plugin.saveSettings();
+									this.render();
 								}
 							}
 						).open();
@@ -205,7 +207,7 @@ export class MetadataButlerSettingTab extends PluginSettingTab {
 
 		/* ── Protected YAML Keys (Do-Not-Touch) ─────────── */
 
-		containerEl.createEl("h3", { text: "Protected YAML Keys" });
+		new Setting(containerEl).setName("Protected YAML keys").setHeading();
 
 		new Setting(containerEl)
 			.setName("Protected YAML keys")
@@ -213,7 +215,7 @@ export class MetadataButlerSettingTab extends PluginSettingTab {
 				"One key per line. The plugin will never delete or overwrite these YAML keys — protects data from other plugins."
 			)
 			.addTextArea((text) => {
-				text.setPlaceholder("cssclass\naliases\nid")
+				text.setPlaceholder("Cssclass\naliases\nID")
 					.setValue(
 						this.plugin.settings.protectedYamlKeys?.join(
 							"\n"

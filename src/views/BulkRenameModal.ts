@@ -1,6 +1,8 @@
-import { Modal, Notice, TFile, TextComponent } from "obsidian";
+import { App, Modal, Notice, TFile, TextComponent } from "obsidian";
 import { PathFilter } from "../services/PathFilter";
 import { getNested, setNested, deleteNested, hasNested } from "../utils/NestedPath";
+import { PendingMigration } from "../settings/settings";
+import type MetadataButlerPlugin from "../main";
 
 export class BulkRenameModal extends Modal {
 	private oldKey = "";
@@ -15,8 +17,8 @@ export class BulkRenameModal extends Modal {
 	private resultEl!: HTMLElement;
 
 	constructor(
-		app: any,
-		private plugin: any
+		app: App,
+		private plugin: MetadataButlerPlugin
 	) {
 		super(app);
 	}
@@ -25,7 +27,7 @@ export class BulkRenameModal extends Modal {
 		const { contentEl } = this;
 		contentEl.empty();
 
-		contentEl.createEl("h2", { text: "Rename YAML Key" });
+		contentEl.createEl("h2", { text: "Rename YAML key" });
 
 		contentEl.createEl("p", {
 			text: "Renames a YAML key across all files in your vault.",
@@ -34,39 +36,41 @@ export class BulkRenameModal extends Modal {
 		contentEl.createEl("label", { text: "Old YAML key:" });
 		this.oldInput = new TextComponent(contentEl);
 		this.oldInput
-			.setPlaceholder("e.g. oldKey")
+			.setPlaceholder("E.g. Oldkey")
 			.setValue(this.oldKey)
 			.onChange((v) => {
 				this.oldKey = v.trim();
 				this.scanned = false;
 			});
-		this.oldInput.inputEl.style.width = "100%";
+		this.oldInput.inputEl.addClass("md-butler-full-width");
 
 		contentEl.createEl("br");
 		contentEl.createEl("label", { text: "New YAML key:" });
 		this.newInput = new TextComponent(contentEl);
 		this.newInput
-			.setPlaceholder("e.g. newKey")
+			.setPlaceholder("E.g. Newkey")
 			.setValue(this.newKey)
 			.onChange((v) => {
 				this.newKey = v.trim();
 				this.scanned = false;
 			});
-		this.newInput.inputEl.style.width = "100%";
+		this.newInput.inputEl.addClass("md-butler-full-width");
 
 		contentEl.createEl("br");
 		contentEl.createEl("br");
 
 		this.scanBtn = contentEl.createEl("button", { text: "Scan" });
-		this.scanBtn.addEventListener("click", () => this.onScan());
+		this.scanBtn.addEventListener("click", () => {
+			void this.onScan();
+		});
 
 		this.resultEl = contentEl.createDiv();
-		this.resultEl.style.marginTop = "1em";
+		this.resultEl.addClass("md-butler-mt-1");
 
 		contentEl.createEl("hr");
 
 		const warn = contentEl.createEl("p");
-		warn.style.color = "var(--color-orange, #ff9800)";
+		warn.addClass("md-butler-warn");
 		warn.setText(
 			"⚠ This action cannot be undone. Files will be modified immediately."
 		);
@@ -74,9 +78,11 @@ export class BulkRenameModal extends Modal {
 		this.renameBtn = contentEl.createEl("button", {
 			text: "Rename in 0 files",
 		});
-		this.renameBtn.style.marginTop = "0.5em";
+		this.renameBtn.addClass("md-butler-mt-05");
 		this.renameBtn.disabled = true;
-		this.renameBtn.addEventListener("click", () => this.onRename());
+		this.renameBtn.addEventListener("click", () => {
+			void this.onRename();
+		});
 	}
 
 	private async onScan() {
@@ -113,7 +119,7 @@ export class BulkRenameModal extends Modal {
 		this.scanBtn.disabled = true;
 
 		// Defer to let UI update
-		await new Promise((r) => setTimeout(r, 50));
+		await new Promise((resolve) => window.setTimeout(resolve, 50));
 
 		const files = this.app.vault.getMarkdownFiles();
 		const settings = this.plugin.settings;
@@ -159,18 +165,19 @@ export class BulkRenameModal extends Modal {
 		const count = this.resultEl.createEl("p", {
 			text: `Found "${this.oldKey}" in ${this.affectedFiles.length} file${this.affectedFiles.length !== 1 ? "s" : ""}.`,
 		});
-		count.style.fontWeight = "bold";
+		count.addClass("md-butler-bold");
 
 		const details = this.resultEl.createEl("details");
 		const summary = details.createEl("summary", {
 			text: "Show files",
 		});
-		summary.style.cursor = "pointer";
+		summary.addClass("md-butler-pointer");
 
 		for (const file of this.affectedFiles) {
-			details.createEl("p", {
+			const item = details.createEl("p", {
 				text: file.path,
-			}).style.marginLeft = "1em";
+			});
+			item.addClass("md-butler-ml-1");
 		}
 
 		this.renameBtn.setText(
@@ -195,7 +202,7 @@ export class BulkRenameModal extends Modal {
 			try {
 				await this.app.fileManager.processFrontMatter(
 					file,
-					(fm) => {
+					(fm: Record<string, unknown>) => {
 						if (hasNested(fm, this.oldKey) && !protect.has(this.oldKey)) {
 							if (!protect.has(this.newKey)) {
 								setNested(fm, this.newKey, getNested(fm, this.oldKey));
@@ -220,7 +227,7 @@ export class BulkRenameModal extends Modal {
 		);
 
 		const matchedField = this.plugin.settings.fields.find(
-			(f: any) => f.yamlKey === this.oldKey
+			(f) => f.yamlKey === this.oldKey
 		);
 		if (matchedField) {
 			matchedField.yamlKey = this.newKey;
@@ -228,7 +235,7 @@ export class BulkRenameModal extends Modal {
 				this.plugin.settings.pendingMigrations = [];
 			}
 			const existing = this.plugin.settings.pendingMigrations.find(
-				(m: any) => m.fieldId === matchedField.id
+				(m: PendingMigration) => m.fieldId === matchedField.id
 			);
 			if (existing) {
 				existing.oldKey = this.oldKey;

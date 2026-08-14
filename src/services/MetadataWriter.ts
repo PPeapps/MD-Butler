@@ -5,7 +5,7 @@ import { now } from "../utils/DateUtils";
 import { ConditionEvaluator } from "./ConditionEvaluator";
 import { readOptionsForWriter } from "../utils/SelectUtils";
 import { generateNoteId } from "../utils/IdUtils";
-import { getNested, setNested, deleteNested, hasNested } from "../utils/NestedPath";
+import { getNested, setNested, deleteNested, hasNested, isEmptyValue } from "../utils/NestedPath";
 
 export class MetadataWriter {
 	constructor(private app: App) {}
@@ -42,7 +42,7 @@ export class MetadataWriter {
 			const protect = new Set(protectedYamlKeys ?? []);
 			const isProtected = (key: string) => protect.has(key);
 
-			await this.app.fileManager.processFrontMatter(file, (fm) => {
+			await this.app.fileManager.processFrontMatter(file, (fm: Record<string, unknown>) => {
 				if (orphanedYamlKeys && orphanedYamlKeys.length > 0) {
 					for (const key of orphanedYamlKeys) {
 						if (!isProtected(key)) deleteNested(fm, key);
@@ -56,7 +56,7 @@ export class MetadataWriter {
 						);
 						if (!field) continue;
 						if (isProtected(m.oldKey)) continue;
-						const oldVal = getNested(fm, m.oldKey);
+						const oldVal: unknown = getNested(fm, m.oldKey);
 						if (
 							oldVal !== undefined &&
 							!hasNested(fm, field.yamlKey)
@@ -68,7 +68,11 @@ export class MetadataWriter {
 				}
 
 				if (dateCreatedEnabled && dcField) {
-					if (!hasNested(fm, dcField.yamlKey) || force) {
+					if (
+						!hasNested(fm, dcField.yamlKey) ||
+						isEmptyValue(getNested(fm, dcField.yamlKey)) ||
+						force
+					) {
 						setNested(fm, dcField.yamlKey, now(dateFormat));
 					}
 				}
@@ -80,7 +84,7 @@ export class MetadataWriter {
 			for (const sf of selectFields) {
 				if (!sf.yamlKey) continue;
 				if (isProtected(sf.yamlKey)) continue;
-				if (hasNested(fm, sf.yamlKey)) continue;
+				if (hasNested(fm, sf.yamlKey) && !isEmptyValue(getNested(fm, sf.yamlKey))) continue;
 				const val = (sf.template && !sf.template.includes("{{"))
 					? sf.template
 					: (sf.defaultValue ?? sf.options[0]);
@@ -92,7 +96,7 @@ export class MetadataWriter {
 				);
 				for (const bf of boolFields) {
 					if (!bf.yamlKey || isProtected(bf.yamlKey)) continue;
-					if (hasNested(fm, bf.yamlKey)) continue;
+					if (hasNested(fm, bf.yamlKey) && !isEmptyValue(getNested(fm, bf.yamlKey))) continue;
 					const raw = (bf.template && !bf.template.includes("{{"))
 						? bf.template
 						: bf.defaultValue;
@@ -106,7 +110,7 @@ export class MetadataWriter {
 				);
 				for (const nf of numFields) {
 					if (!nf.yamlKey || isProtected(nf.yamlKey)) continue;
-					if (hasNested(fm, nf.yamlKey)) continue;
+					if (hasNested(fm, nf.yamlKey) && !isEmptyValue(getNested(fm, nf.yamlKey))) continue;
 					const raw = (nf.template && !nf.template.includes("{{"))
 						? nf.template
 						: nf.defaultValue;
@@ -123,7 +127,7 @@ export class MetadataWriter {
 				);
 				for (const mf of multiFields) {
 					if (!mf.yamlKey || isProtected(mf.yamlKey)) continue;
-					if (hasNested(fm, mf.yamlKey)) continue;
+					if (hasNested(fm, mf.yamlKey) && !isEmptyValue(getNested(fm, mf.yamlKey))) continue;
 					const raw = (mf.template && !mf.template.includes("{{"))
 						? mf.template
 						: mf.defaultValue;
@@ -145,7 +149,7 @@ export class MetadataWriter {
 					if (isProtected(field.yamlKey)) continue;
 				const value = update[field.id];
 				if (value !== undefined && value !== null) {
-					if (!force && eventType === "bulk" && hasNested(fm, field.yamlKey) && !field.template?.includes("{{lookup:")) {
+					if (!force && eventType === "bulk" && hasNested(fm, field.yamlKey) && !isEmptyValue(getNested(fm, field.yamlKey)) && !field.template?.includes("{{lookup:")) {
 						continue;
 					}
 					setNested(fm, field.yamlKey, value);
@@ -154,7 +158,8 @@ export class MetadataWriter {
 					if (
 						field.isCustom &&
 						field.defaultValue !== undefined &&
-						!hasNested(fm, field.yamlKey)
+						(!hasNested(fm, field.yamlKey) ||
+							isEmptyValue(getNested(fm, field.yamlKey)))
 					) {
 						if (
 							!field.condition ||
@@ -182,9 +187,9 @@ export class MetadataWriter {
 				const noteIdField = fields.find(f => f.id === "noteId" && f.enabled);
 				if (noteIdField) {
 					const yamlKey = noteIdField.yamlKey;
-					if (!hasNested(fm, yamlKey)) {
+					if (!hasNested(fm, yamlKey) || isEmptyValue(getNested(fm, yamlKey))) {
 						const mig = pendingMigrations?.find(m => m.fieldId === "noteId");
-						const oldVal = mig ? getNested(fm, mig.oldKey) : undefined;
+						const oldVal: unknown = mig ? getNested(fm, mig.oldKey) : undefined;
 						if (oldVal !== undefined) {
 							setNested(fm, yamlKey, oldVal);
 							deleteNested(fm, mig!.oldKey);
@@ -199,15 +204,15 @@ export class MetadataWriter {
 							for (const key of Object.keys(fm)) {
 								if (key !== group) ordered[key] = fm[key];
 							}
-							Object.keys(fm).forEach(k => delete (fm as Record<string, unknown>)[k]);
+							Object.keys(fm).forEach(k => delete fm[k]);
 							Object.assign(fm, ordered);
 						} else {
 							const ordered: Record<string, unknown> = {};
-							ordered[yamlKey] = fm[yamlKey] as string;
+							ordered[yamlKey] = fm[yamlKey];
 							for (const key of Object.keys(fm)) {
 								if (key !== yamlKey) ordered[key] = fm[key];
 							}
-							Object.keys(fm).forEach(k => delete (fm as Record<string, unknown>)[k]);
+							Object.keys(fm).forEach(k => delete fm[k]);
 							Object.assign(fm, ordered);
 						}
 					}

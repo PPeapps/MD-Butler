@@ -3,7 +3,7 @@
  * Green for complete files, red for incomplete with missing field list.
  * Shows value issues for select/multi fields with non-matching values.
  */
-import { Modal } from "obsidian";
+import { App, Modal } from "obsidian";
 import {
 	ConsistencyReport,
 	ValueIssue,
@@ -11,7 +11,7 @@ import {
 
 export class ConsistencyModal extends Modal {
 	constructor(
-		app: any,
+		app: App,
 		private report: ConsistencyReport
 	) {
 		super(app);
@@ -21,7 +21,7 @@ export class ConsistencyModal extends Modal {
 		const { contentEl } = this;
 		contentEl.empty();
 
-		contentEl.createEl("h2", { text: "Vault Consistency Check" });
+		contentEl.createEl("h2", { text: "Vault consistency check" });
 
 		const copyBtn = contentEl.createEl("button", {
 			text: "Copy report to clipboard",
@@ -45,17 +45,17 @@ export class ConsistencyModal extends Modal {
 		const c = summary.createEl("p", {
 			text: `Complete: ${this.report.completeFiles} files`,
 		});
-		c.style.color = "var(--color-green, #4caf50)";
+		c.addClass("md-butler-green");
 
 		const i = summary.createEl("p", {
 			text: `Incomplete: ${this.report.incompleteFiles} files`,
 		});
-		i.style.color = "var(--color-red, #f44336)";
+		i.addClass("md-butler-red");
 
 		const vi = summary.createEl("p", {
 			text: `Value issues: ${this.report.valueIssues.length}`,
 		});
-		vi.style.color = "var(--color-orange, #ff9800)";
+		vi.addClass("md-butler-orange");
 
 		const hasIssues =
 			this.report.incompleteFiles > 0 ||
@@ -70,7 +70,7 @@ export class ConsistencyModal extends Modal {
 		}
 
 		if (this.report.incompleteFiles > 0) {
-			contentEl.createEl("h3", { text: "Incomplete Files" });
+			contentEl.createEl("h3", { text: "Incomplete files" });
 			const list = contentEl.createEl("ul");
 			for (const r of this.report.results) {
 				const li = list.createEl("li");
@@ -95,25 +95,23 @@ export class ConsistencyModal extends Modal {
 			const summary = section.createEl("summary", {
 				text: `${yamlKey} (${issues.length})`,
 			});
-			summary.style.fontWeight = "bold";
+			summary.addClass("md-butler-bold");
 
 			for (const issue of issues) {
 				const p = section.createEl("p");
-				p.style.marginLeft = "1em";
-				p.style.marginTop = "0.3em";
-				p.style.marginBottom = "0.3em";
+				p.addClass("md-butler-issue-text");
 				p.createEl("span", {
 					text: `${issue.file.path}: `,
 				});
 				const bad = p.createEl("code", {
 					text: `"${issue.currentValue}"`,
 				});
-				bad.style.color = "var(--color-red, #f44336)";
+				bad.addClass("md-butler-red");
 				p.append(" → expected: ");
 				const exp = p.createEl("code", {
 					text: `[${issue.expectedValues.join(", ")}]`,
 				});
-				exp.style.color = "var(--color-green, #4caf50)";
+				exp.addClass("md-butler-green");
 			}
 		}
 	}

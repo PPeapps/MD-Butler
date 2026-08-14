@@ -28,7 +28,7 @@ File Event (open / modify / rename)
   ├── Guard 1: internalWrite?              → skip (plugin's own writes)
   ├── Guard 2: deduplicator (< 2s)?        → skip (duplicate event)
   ├── Guard 3: path filter (excluded)?     → skip (folder excluded)
-  └── Guard 4: scope (newOnly + has key)?  → skip (already processed)
+  └── Guard 4: scope (newOnly + no empty fields)? → skip (already processed)
        │
        ▼
   MetadataUpdateBuilder.build()
@@ -71,14 +71,14 @@ Uses **moment.js** syntax. Applied to `DateCreated`, `LastModified`, `LastMoved`
 
 ```
 newOnly:
-  ├─ File already has DateCreated → SKIP (already processed)
-  └─ No DateCreated yet           → WRITE (first open)
+  ├─ Has DateCreated + no empty fields → SKIP (already processed)
+  └─ No DateCreated yet OR any field is empty → WRITE (fill missing/empty)
 
 allFiles:
   └─ Always WRITE (every matching event)
 ```
 
-- **`newOnly`** — Recommended. Only processes files that don't have `DateCreated` yet. Once set, future events on that file skip the pipeline (unless a rename event occurs). Safe for existing vaults.
+- **`newOnly`** — Recommended. Processes files that don't have `DateCreated` yet, and files that still contain **empty** fields (e.g. `Note.UUID: `). Empty values are filled; existing, non-empty values are never overwritten. Safe for existing vaults.
 - **`allFiles`** — Processes every file on every matching event. Useful when you want `LastModified` to update on every edit.
 
 ---
@@ -91,7 +91,7 @@ allFiles:
 | **LastModified** | modify, rename, bulk | Always on matching events | Timestamp of last content edit |
 | **LastMoved** | rename (folder change only) | Always on matching events | Timestamp of last folder move |
 
-**DateCreated** fires on the first `open` event after the note is created. In `newOnly` mode it won't be touched again. In `allFiles` mode it's still only written when missing — it never overwrites an existing value unless you use Force-Apply.
+**DateCreated** fires on the first `open` event after the note is created. In `newOnly` mode it is never overwritten once set (an empty `DateCreated` is still filled). In `allFiles` mode it's still only written when missing — it never overwrites an existing value unless you use Force-Apply.
 
 **LastModified** updates every time you edit and save the note (`modify` event). It also updates on `rename` when the file name changes.
 
@@ -162,7 +162,7 @@ Each field row in Settings shows these controls:
 | `{{now-Nd}}` | `{{now-1w}}` | `2026-06-12` |
 | `{{title}}` | — | File name without extension |
 | `{{fileName}}` | — | File name with extension |
-| `{{fileFolder}}` | — | Parent folder path |
+| `{{fileFolder}}` | — | Parent folder path (alias: `{{folder}}`) |
 | `{{filePath}}` | — | Full vault path |
 | `{{oldPath}}` | — | Previous path (rename only) |
 | `{{oldFolder}}` | — | Previous folder (rename only) |
