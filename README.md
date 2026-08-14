@@ -30,17 +30,21 @@
 
 ## Installation
 
-### From Obsidian Community Plugins (pending)
+### Via BRAT (recommended)
 
-1. Open Obsidian Settings → Community Plugins
-2. Browse and search for "MD Butler"
-3. Install and enable
+1. Install the [BRAT plugin](https://github.com/TfTHacker/obsidian42-brat) (Obsidian → Settings → Community Plugins → BRAT)
+2. In BRAT: **Add Beta plugin** → enter `PPeapps/MD-Butler`
+3. Enable MD Butler — future updates arrive automatically
 
 ### Manual installation
 
 1. Download the latest release from GitHub
 2. Copy `main.js`, `manifest.json`, and `styles.css` to `VaultFolder/.obsidian/plugins/md-butler/`
 3. Reload Obsidian and enable the plugin
+
+### From Obsidian Community Plugins
+
+Not yet available — submission to the official directory is planned. Until then, use BRAT or manual installation.
 
 ## Commands
 
