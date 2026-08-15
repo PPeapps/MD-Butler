@@ -11,6 +11,7 @@
 
 ### Internal
 - **ESLint cleanup** — 283 lint messages from `eslint-plugin-obsidianmd` fixed (no-static-styles-assignment, no-explicit-any / no-unsafe-*, sentence-case, no-misused-promises, no-manual-html-headings, …). `eslint src`, `tsc -noEmit -skipLibCheck`, and `npm run build` are green.
+- **Path hardening** — `normalizePath()` applied to user-supplied paths (`{{lookup:path,…}}` templates, `optionsFile` config).
 
 ---
 
