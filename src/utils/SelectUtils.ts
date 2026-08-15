@@ -1,4 +1,4 @@
-import { App, TFile, Notice } from "obsidian";
+import { App, TFile, Notice, normalizePath } from "obsidian";
 import { MetadataFieldConfig } from "../types/MetadataField";
 
 export async function loadOptionsFromFile(
@@ -6,7 +6,7 @@ export async function loadOptionsFromFile(
 	app: App
 ): Promise<void> {
 	if (!field.optionsFile) return;
-	const file = app.vault.getAbstractFileByPath(field.optionsFile);
+	const file = app.vault.getAbstractFileByPath(normalizePath(field.optionsFile));
 	if (!(file instanceof TFile)) {
 		new Notice(`MD Butler: Options-Datei nicht gefunden: ${field.optionsFile}`);
 		return;
@@ -34,7 +34,7 @@ export async function readOptionsForWriter(
 	app: App
 ): Promise<string[]> {
 	if (!field.optionsFile) return field.options ?? [];
-	const file = app.vault.getAbstractFileByPath(field.optionsFile);
+	const file = app.vault.getAbstractFileByPath(normalizePath(field.optionsFile));
 	if (!(file instanceof TFile)) return field.options ?? [];
 	try {
 		const content = await app.vault.read(file);

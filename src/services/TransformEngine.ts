@@ -1,4 +1,4 @@
-import { App, TFile, moment } from "obsidian";
+import { App, TFile, moment, normalizePath } from "obsidian";
 import { EventType } from "../types/Events";
 import { getNested } from "../utils/NestedPath";
 
@@ -242,29 +242,30 @@ export class TransformEngine {
 		path: string,
 		ctx: TransformContext
 	): string | null {
-		if (path.startsWith("/")) {
-			const p = path.slice(1);
+		const normalized = normalizePath(path);
+		if (normalized.startsWith("/")) {
+			const p = normalized.slice(1);
 			if (this.app.vault.getAbstractFileByPath(p) instanceof TFile)
 				return p;
 			return null;
 		}
 
-		if (this.app.vault.getAbstractFileByPath(path) instanceof TFile)
-			return path;
+		if (this.app.vault.getAbstractFileByPath(normalized) instanceof TFile)
+			return normalized;
 
-		if (path.includes("/") && ctx.file?.parent) {
-			const resolved = `${ctx.file.parent.path}/${path}`;
+		if (normalized.includes("/") && ctx.file?.parent) {
+			const resolved = `${ctx.file.parent.path}/${normalized}`;
 			if (
 				this.app.vault.getAbstractFileByPath(resolved) instanceof TFile
 			)
 				return resolved;
 		}
 
-		if (path.startsWith("../") && ctx.file?.parent) {
+		if (normalized.startsWith("../") && ctx.file?.parent) {
 			const segments = ctx.file.parent.path
 				.split("/")
 				.filter(Boolean);
-			let remaining = path;
+			let remaining = normalized;
 			while (remaining.startsWith("../")) {
 				if (segments.length === 0) return null;
 				segments.pop();

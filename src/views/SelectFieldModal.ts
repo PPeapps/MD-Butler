@@ -1,4 +1,4 @@
-import { App, Modal, TFile, Setting } from "obsidian";
+import { App, Modal, TFile, Setting, normalizePath } from "obsidian";
 import { MetadataFieldConfig } from "../types/MetadataField";
 import { loadOptionsFromFile } from "../utils/SelectUtils";
 import { getNested, setNested } from "../utils/NestedPath";
@@ -75,7 +75,7 @@ export class SelectFieldModal extends Modal {
 			setting.setDesc(`from: ${field.optionsFile}`);
 		}
 
-		if (field.optionsFile && !(this.app.vault.getAbstractFileByPath(field.optionsFile) instanceof TFile)) {
+		if (field.optionsFile && !(this.app.vault.getAbstractFileByPath(normalizePath(field.optionsFile)) instanceof TFile)) {
 			const createBtn = setting.descEl.createEl("button", {
 				text: "➕ Datei erstellen",
 				cls: "md-butler-create-btn"
