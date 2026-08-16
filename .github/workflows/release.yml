@@ -31,7 +31,10 @@ jobs:
       - name: Attest build provenance
         uses: actions/attest-build-provenance@v2
         with:
-          subject-path: "${{ github.workspace }}/main.js"
+          subject-path: |
+            ${{ github.workspace }}/main.js
+            ${{ github.workspace }}/manifest.json
+            ${{ github.workspace }}/styles.css
 
       - name: Release
         uses: softprops/action-gh-release@v2
