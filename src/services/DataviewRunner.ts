@@ -21,7 +21,7 @@ export async function executeDataviewQuery(
 ): Promise<string[]> {
 	const dvApi = getDataviewApi(app);
 
-	// eslint-disable-next-line @typescript-eslint/no-implied-eval
+	// eslint-disable-next-line @typescript-eslint/no-implied-eval, no-new-func -- Dataview's JS API only exposes querying through evaluated expressions; the code string is user-defined in the plugin settings
 	const fn = new Function("dv", "return " + code) as (dv: unknown) => unknown;
 	const result: unknown = fn(dvApi);
 

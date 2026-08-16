@@ -1,6 +1,7 @@
-import { App, TFile, moment, normalizePath } from "obsidian";
+import { App, TFile, normalizePath } from "obsidian";
 import { EventType } from "../types/Events";
 import { getNested } from "../utils/NestedPath";
+import { momentFn } from "../utils/DateUtils";
 
 export interface TransformContext {
 	file: TFile;
@@ -105,7 +106,7 @@ export class TransformEngine {
 			}
 			case "date": {
 				if (!args) return value;
-				const parsed = moment(value);
+				const parsed = momentFn(value);
 				return parsed.isValid() ? parsed.format(args) : value;
 			}
 			default:
@@ -118,14 +119,14 @@ export class TransformEngine {
 		ctx: TransformContext
 	): string | null {
 		if (expr.startsWith("date:")) {
-			return moment().format(expr.slice(5));
+			return momentFn().format(expr.slice(5));
 		}
 
 		const relMatch = expr.match(/^now([+-]\d+)([dwMy])$/);
 		if (relMatch) {
 			const amount = parseInt(relMatch[1]!, 10);
-			const unit = relMatch[2] as moment.unitOfTime.DurationConstructor;
-			return moment().add(amount, unit).format(ctx.dateFormat);
+			const unit = relMatch[2]!;
+			return momentFn().add(amount, unit).format(ctx.dateFormat);
 		}
 
 		switch (expr) {

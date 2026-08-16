@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.0.5 (2026-08-14) — community review fixes
+
+### Internal
+- **Review-bot fixes** — addressed feedback from the Obsidian community review:
+  - `eslint-disable` directive comments now carry a description (`no-undescribed-directive-comment`)
+  - `moment` usage decoupled from moment's type declarations via a structural `MomentLike` type (fixes `no-unsafe-*` findings in the review environment)
+  - `createEl("div")` / `createEl("span")` replaced with `createDiv()` / `createSpan()` (`prefer-create-el`)
+  - `SettingsTab` now implements `getSettingDefinitions()` (settings appear in Obsidian 1.13+ settings search)
+  - `no-new-func` explicitly disabled with justification for the Dataview JS integration and enabled in the local ESLint config
+- **Release tag convention** — GitHub release tag must equal the `manifest.json` version **without** a `v` prefix (`1.0.4`, not `v1.0.4`).
+
+---
+
 ## 1.0.4 (2026-08-14) — maintenance update
 
 ### Fixes

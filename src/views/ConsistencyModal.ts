@@ -76,7 +76,7 @@ export class ConsistencyModal extends Modal {
 				const li = list.createEl("li");
 				li.createEl("strong", { text: r.file.path });
 				li.createEl("br");
-				li.createEl("span", {
+				li.createSpan({
 					text: `Missing: ${r.missingFields.join(", ")}`,
 				});
 			}
@@ -100,7 +100,7 @@ export class ConsistencyModal extends Modal {
 			for (const issue of issues) {
 				const p = section.createEl("p");
 				p.addClass("md-butler-issue-text");
-				p.createEl("span", {
+				p.createSpan({
 					text: `${issue.file.path}: `,
 				});
 				const bad = p.createEl("code", {

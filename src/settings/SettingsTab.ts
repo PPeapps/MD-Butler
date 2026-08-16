@@ -3,7 +3,12 @@
  * draggable field list, folder filter mode with always-visible
  * include/exclude lists, and folder browse buttons.
  */
-import { App, PluginSettingTab, Setting } from "obsidian";
+import {
+	App,
+	PluginSettingTab,
+	Setting,
+	SettingDefinitionItem,
+} from "obsidian";
 import MetadataButlerPlugin from "../main";
 import { FilterMode, ProcessingMode } from "./settings";
 import { FieldListComponent } from "./FieldListComponent";
@@ -17,6 +22,32 @@ export class MetadataButlerSettingTab extends PluginSettingTab {
 	constructor(app: App, plugin: MetadataButlerPlugin) {
 		super(app, plugin);
 		this.plugin = plugin;
+	}
+
+	getSettingDefinitions(): SettingDefinitionItem[] {
+		return [
+			{
+				name: "Date format",
+				desc: "Moment.js format used for all metadata dates",
+				control: {
+					type: "text",
+					key: "dateFormat",
+					placeholder: "YYYY-MM-DD ddd hh:mm:ss",
+				},
+			},
+			{
+				name: "Processing mode",
+				desc: "Newonly: only process notes without DateCreated. Allfiles: process all notes.",
+				control: {
+					type: "dropdown",
+					key: "processingMode",
+					options: {
+						newOnly: "New notes only",
+						allFiles: "All files",
+					},
+				},
+			},
+		];
 	}
 
 	display(): void {

@@ -47,26 +47,26 @@ export class StandardizeModal extends Modal {
 				a[0].localeCompare(b[0])
 			);
 			for (const [filePath, fileIssues] of sortedFiles) {
-				const fileSection = fieldSection.createEl("div");
+				const fileSection = fieldSection.createDiv();
 				fileSection.addClass("md-butler-standardize-file");
 
-				const pathEl = fileSection.createEl("span", {
+				const pathEl = fileSection.createSpan({
 					text: filePath,
 				});
 				pathEl.addClass("md-butler-standardize-path");
 
 				for (const issue of fileIssues) {
-					const row = fileSection.createEl("div");
+					const row = fileSection.createDiv();
 					row.addClass("md-butler-standardize-row");
 
-					row.createEl("span", {
+					row.createSpan({
 						text: `✕ `,
 					});
 					const bad = row.createEl("code", {
 						text: `"${issue.currentValue}"`,
 					});
 					bad.addClass("md-butler-bad-value");
-					row.createEl("span", { text: " → " });
+					row.createSpan({ text: " → " });
 
 					const select = row.createEl("select");
 					select.addClass("md-butler-select-ml");
@@ -83,7 +83,7 @@ export class StandardizeModal extends Modal {
 						optEl.value = opt;
 					}
 
-					const warnEl = row.createEl("span");
+					const warnEl = row.createSpan();
 					warnEl.addClass("md-butler-warn-text");
 					warnEl.addClass("md-butler-hidden");
 					warnEl.setText("⚠ Already exists → will be removed");
