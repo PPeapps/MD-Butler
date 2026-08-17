@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.6 (2026-08-15) — settings hotfix
+
+### Fixes
+- **Settings UI restored** — Removed `getSettingDefinitions()` from `SettingsTab` which was causing Obsidian 1.13+ to only render the two basic settings (date format, processing mode), hiding all other options (metadata fields, folder filters, protected YAML keys). The method is only needed for settings search, not display.
+
+---
+
 ## 1.0.5 (2026-08-14) — community review fixes
 
 ### Internal
