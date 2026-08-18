@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.7 (2026-08-18) — re-release settings hotfix
+
+### Fixes
+- **Settings UI restored** — Same fix as 1.0.6 (re-released because 1.0.6 was removed from the directory after review failure). Removed `getSettingDefinitions()` which was causing Obsidian 1.13+ to only render the two basic settings.
+
+---
+
 ## 1.0.6 (2026-08-15) — settings hotfix
 
 ### Fixes
