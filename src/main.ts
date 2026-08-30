@@ -38,7 +38,7 @@ const DEFAULT_FIELD_EVENTS: Record<string, EventType[]> = {
 	fileName: ["open", "rename", "bulk"],
 	filePath: ["open", "rename", "bulk"],
 	source: ["open", "rename", "bulk"],
-	tags: ["modify", "bulk"],
+	tags: ["open", "modify", "bulk"],
 };
 
 export default class MetadataButlerPlugin extends Plugin {
