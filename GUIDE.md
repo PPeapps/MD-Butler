@@ -6,7 +6,7 @@ MD Butler is an automatic YAML frontmatter manager for Obsidian. It listens for 
 
 ## 1. Quick Start
 
-1. **Install** the plugin via [BRAT](https://github.com/TfTHacker/obsidian42-brat) (recommended) or copy the files manually to `.obsidian/plugins/md-butler/`
+1. **Install** the plugin from Obsidian → Settings → Community Plugins (search for **MD Butler**), or copy the files manually to `.obsidian/plugins/md-butler/`
 2. **Enable** it in Settings → Community Plugins
 3. Open **Settings → MD Butler**
 4. Set your **Date Format** (e.g. `YYYY-MM-DD`)
@@ -14,9 +14,8 @@ MD Butler is an automatic YAML frontmatter manager for Obsidian. It listens for 
 
 That's it. Open any note and the enabled fields will be written automatically.
 
-> **Note:** MD Butler is not yet listed in the official Obsidian Community Plugins directory.
-> Use the [BRAT plugin](https://github.com/TfTHacker/obsidian42-brat) for installation and automatic
-> updates, or install manually from the [latest release](https://github.com/PPeapps/MD-Butler/releases).
+> **Note:** MD Butler is available in the official Obsidian Community Plugins directory.
+> Updates arrive automatically with your installed version.
 
 ---
 

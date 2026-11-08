@@ -36,7 +36,7 @@ export const DEFAULT_SETTINGS: MetadataButlerSettings = {
 		{ id: "lastModified", yamlKey: "dates.LastModified",enabled: true,  order: 3, events: ["rename", "bulk"] },
 		{ id: "lastMoved",    yamlKey: "dates.LastMoved",    enabled: true,  order: 4, events: ["rename"], requirement: "if-exists" },
 		{ id: "source",       yamlKey: "Source",            enabled: false, order: 5, events: ["open", "rename", "bulk"], isCustom: true, defaultValue: "" },
-		{ id: "tags",         yamlKey: "Tags",              enabled: false, order: 6, events: ["modify", "bulk"],        isCustom: true, defaultValue: "" },
+		{ id: "tags",         yamlKey: "Tags",              enabled: false, order: 6, type: "multi", events: ["open", "modify", "bulk"],        isCustom: true, defaultValue: "" },
 	],
 	excludedFolders: [],
 	includedFolders: [],

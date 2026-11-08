@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.0.8 (2026-08-30) — protect existing YAML values, create empty tags
+
+### Fixes
+- **Existing YAML values are never overwritten** (MD-006) — Select, boolean, number and multi default-fills now guard via `getValueAnywhere`/`hasValueAnywhere`, which detect both nested (`Note: {NoteType: PDF}`) and flat/legacy keys (`Note.NoteType: PDF` or `NoteType: PDF`). Previously a note with a flat `NoteType` got an additional nested `Note: {NoteType: "Note"}` on any write (modal "Apply to all", force, open/modify), so the RAGtopus-pipeline value `PDF` displayed as `Note`. The present-value guard in the update loop now applies to **all** events (not only bulk); only MD Butler's own tracking fields (`Dates.Modified`, `Note.Title`/`Note.Path`, `Dates.Moved`) and `{{lookup:}}` templates may refresh existing values.
+- **Force no longer touches `Dates.Created`** — `|| force` removed; force-apply no longer overwrites an existing created date.
+- **`tags` is created empty** (MD-007) — a missing/empty `tags` key is now written as `tags: []` instead of never being written. Existing values (e.g. RAGtopus `[PDF, Summary]`) are never modified, and MD Butler never sets tag values.
+- **`relatedMOCs` (multi with object options) is now created** (MD-008) — the multi default-fill no longer filters out fields whose `options` are a Dataview object.
+
+### Internal
+- `DEFAULT_FIELD_EVENTS.tags` extended to `["open", "modify", "bulk"]`.
+
+---
+
 ## 1.0.7 (2026-08-18) — re-release settings hotfix
 
 ### Fixes

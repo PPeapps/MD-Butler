@@ -5,7 +5,7 @@ import { now } from "../utils/DateUtils";
 import { ConditionEvaluator } from "./ConditionEvaluator";
 import { readOptionsForWriter } from "../utils/SelectUtils";
 import { generateNoteId } from "../utils/IdUtils";
-import { getNested, setNested, deleteNested, hasNested, isEmptyValue } from "../utils/NestedPath";
+import { getNested, setNested, deleteNested, hasNested, getValueAnywhere, hasValueAnywhere, isEmptyValue } from "../utils/NestedPath";
 
 export class MetadataWriter {
 	constructor(private app: App) {}
@@ -70,8 +70,7 @@ export class MetadataWriter {
 				if (dateCreatedEnabled && dcField) {
 					if (
 						!hasNested(fm, dcField.yamlKey) ||
-						isEmptyValue(getNested(fm, dcField.yamlKey)) ||
-						force
+						isEmptyValue(getNested(fm, dcField.yamlKey))
 					) {
 						setNested(fm, dcField.yamlKey, now(dateFormat));
 					}
@@ -84,7 +83,8 @@ export class MetadataWriter {
 			for (const sf of selectFields) {
 				if (!sf.yamlKey) continue;
 				if (isProtected(sf.yamlKey)) continue;
-				if (hasNested(fm, sf.yamlKey) && !isEmptyValue(getNested(fm, sf.yamlKey))) continue;
+if (sf.processingMode === "newOnly" && hasValueAnywhere(fm, sf.yamlKey)) continue;
+				if (hasValueAnywhere(fm, sf.yamlKey) && !isEmptyValue(getValueAnywhere(fm, sf.yamlKey))) continue;
 				const val = (sf.template && !sf.template.includes("{{"))
 					? sf.template
 					: (sf.defaultValue ?? sf.options[0]);
@@ -96,7 +96,8 @@ export class MetadataWriter {
 				);
 				for (const bf of boolFields) {
 					if (!bf.yamlKey || isProtected(bf.yamlKey)) continue;
-					if (hasNested(fm, bf.yamlKey) && !isEmptyValue(getNested(fm, bf.yamlKey))) continue;
+if (bf.processingMode === "newOnly" && hasValueAnywhere(fm, bf.yamlKey)) continue;
+					if (hasValueAnywhere(fm, bf.yamlKey) && !isEmptyValue(getValueAnywhere(fm, bf.yamlKey))) continue;
 					const raw = (bf.template && !bf.template.includes("{{"))
 						? bf.template
 						: bf.defaultValue;
@@ -110,7 +111,8 @@ export class MetadataWriter {
 				);
 				for (const nf of numFields) {
 					if (!nf.yamlKey || isProtected(nf.yamlKey)) continue;
-					if (hasNested(fm, nf.yamlKey) && !isEmptyValue(getNested(fm, nf.yamlKey))) continue;
+if (nf.processingMode === "newOnly" && hasValueAnywhere(fm, nf.yamlKey)) continue;
+					if (hasValueAnywhere(fm, nf.yamlKey) && !isEmptyValue(getValueAnywhere(fm, nf.yamlKey))) continue;
 					const raw = (nf.template && !nf.template.includes("{{"))
 						? nf.template
 						: nf.defaultValue;
@@ -123,11 +125,12 @@ export class MetadataWriter {
 				}
 
 				const multiFields = fields.filter(
-					f => f.type === "multi" && f.enabled && (f.options?.length ?? 0) > 0
+					f => f.type === "multi" && f.enabled
 				);
 				for (const mf of multiFields) {
 					if (!mf.yamlKey || isProtected(mf.yamlKey)) continue;
-					if (hasNested(fm, mf.yamlKey) && !isEmptyValue(getNested(fm, mf.yamlKey))) continue;
+if (mf.processingMode === "newOnly" && hasValueAnywhere(fm, mf.yamlKey)) continue;
+					if (hasValueAnywhere(fm, mf.yamlKey) && !isEmptyValue(getValueAnywhere(fm, mf.yamlKey))) continue;
 					const raw = (mf.template && !mf.template.includes("{{"))
 						? mf.template
 						: mf.defaultValue;
@@ -136,8 +139,10 @@ export class MetadataWriter {
 							.split(",")
 							.map(s => s.trim())
 							.filter(Boolean));
-					} else if (mf.defaultValue) {
-						setNested(fm, mf.yamlKey, [mf.defaultValue]);
+					} else if (raw !== undefined && raw !== "") {
+						setNested(fm, mf.yamlKey, [raw]);
+					} else if (mf.defaultValue !== undefined || mf.id === "tags") {
+						setNested(fm, mf.yamlKey, []);
 					}
 				}
 
@@ -147,19 +152,39 @@ export class MetadataWriter {
 
 				for (const field of orderedFields) {
 					if (isProtected(field.yamlKey)) continue;
-				const value = update[field.id];
-				if (value !== undefined && value !== null) {
-					if (!force && eventType === "bulk" && hasNested(fm, field.yamlKey) && !isEmptyValue(getNested(fm, field.yamlKey)) && !field.template?.includes("{{lookup:")) {
-						continue;
-					}
-					setNested(fm, field.yamlKey, value);
+					const value = update[field.id];
+					if (value !== undefined && value !== null) {
+						const alreadySet =
+							hasValueAnywhere(fm, field.yamlKey) &&
+							!isEmptyValue(getValueAnywhere(fm, field.yamlKey));
+						const isIntrinsicSync =
+							field.id === "fileName" ||
+							field.id === "filePath" ||
+							field.id === "lastModified" ||
+							field.id === "lastMoved";
+						if (!force && !isIntrinsicSync && !field.template?.includes("{{lookup:")) {
+							const pm = field.processingMode ?? "ifEmpty";
+							let skipForMode = false;
+							if (pm === "newOnly") {
+								skipForMode = hasValueAnywhere(fm, field.yamlKey);
+							} else if (pm === "ifEmpty") {
+								skipForMode = alreadySet;
+							} else {
+								skipForMode = false; // always
+							}
+							if (skipForMode) {
+								continue;
+							}
+						}
+						setNested(fm, field.yamlKey, value);
 						continue;
 					}
 					if (
 						field.isCustom &&
+						(field.type === "text" || !field.type) &&
 						field.defaultValue !== undefined &&
-						(!hasNested(fm, field.yamlKey) ||
-							isEmptyValue(getNested(fm, field.yamlKey)))
+						(!hasValueAnywhere(fm, field.yamlKey) ||
+							isEmptyValue(getValueAnywhere(fm, field.yamlKey)))
 					) {
 						if (
 							!field.condition ||

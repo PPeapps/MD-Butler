@@ -25,6 +25,8 @@ import { SelectFieldModal } from "./views/SelectFieldModal";
 import { StandardizerService } from "./services/StandardizerService";
 import { StandardizeModal } from "./views/StandardizeModal";
 import { BulkRenameModal } from "./views/BulkRenameModal";
+import { FileSuggestModal } from "./settings/FileSuggestModal";
+import { BulkValueModal } from "./views/BulkValueModal";
 import { MetadataFieldConfig } from "./types/MetadataField";
 import { getNested } from "./utils/NestedPath";
 import { executeDataviewForField } from "./services/DataviewRunner";
@@ -38,14 +40,14 @@ const DEFAULT_FIELD_EVENTS: Record<string, EventType[]> = {
 	fileName: ["open", "rename", "bulk"],
 	filePath: ["open", "rename", "bulk"],
 	source: ["open", "rename", "bulk"],
-	tags: ["modify", "bulk"],
+	tags: ["open", "modify", "bulk"],
 };
 
 export default class MetadataButlerPlugin extends Plugin {
 	settings!: MetadataButlerSettings;
-	private bulkRunning = false;
+	bulkRunning = false;
 	private internalWrite = false;
-	private cancelled = false;
+	cancelled = false;
 	private previousFields: MetadataFieldConfig[] = [];
 	private deduplicator = new EventDeduplicator();
 	private queue = new UpdateQueue();
@@ -93,6 +95,15 @@ export default class MetadataButlerPlugin extends Plugin {
 		for (const field of this.settings.fields) {
 			if (!field.type) field.type = "text";
 			if ((field.type === "select" || field.type === "multi") && !field.options) field.options = [];
+		}
+		// Migration: tags must be a multi field (MD-007 reliability)
+		const tagsField = this.settings.fields.find((f) => f.id === "tags");
+		if (tagsField) {
+			tagsField.type = "multi";
+			if (!tagsField.options) tagsField.options = [];
+			if (!tagsField.events || !tagsField.events.includes("open")) {
+				tagsField.events = ["open", "modify", "bulk"];
+			}
 		}
 		for (const field of this.settings.fields) {
 			if (!field.events) {
@@ -224,6 +235,62 @@ export default class MetadataButlerPlugin extends Plugin {
 				new BulkRenameModal(this.app, this).open();
 			},
 		});
+		this.addCommand({
+			id: "bulk-set-value",
+			name: "Set field value in folder",
+			callback: () => {
+				new BulkValueModal(this.app, this).open();
+			},
+		});
+		this.addCommand({
+			id: "export-field-config",
+			name: "Export field config",
+			callback: async () => {
+				const json = JSON.stringify(
+					this.settings.fields,
+					null,
+					2
+				);
+				const path = "md-butler-field-config.json";
+				const existing =
+					this.app.vault.getAbstractFileByPath(path);
+				if (existing instanceof TFile) {
+					await this.app.vault.modify(existing, json);
+				} else {
+					await this.app.vault.create(path, json);
+				}
+				new Notice(`Field config exported to ${path}`);
+			},
+		});
+		this.addCommand({
+			id: "import-field-config",
+			name: "Import field config",
+			callback: () => {
+				new FileSuggestModal(this.app, (file: TFile) => {
+					void (async () => {
+						try {
+							const content =
+								await this.app.vault.read(file);
+							const parsed = JSON.parse(
+								content
+							) as MetadataFieldConfig[];
+							if (!Array.isArray(parsed)) {
+								throw new Error("Invalid config");
+							}
+							this.settings.fields = parsed;
+							await this.saveSettings();
+							new Notice(
+								`Imported ${parsed.length} fields from ${file.path}`
+							);
+						} catch (e) {
+							new Notice(
+								`Import failed: ${(e as Error).message}`
+							);
+						}
+					})();
+				}).open();
+			},
+		});
 	}
 
 	private registerEvents() {
@@ -337,6 +404,11 @@ export default class MetadataButlerPlugin extends Plugin {
 		this.queue.add(event.file, update ?? {}, event.type);
 
 		if (event.type === "open") {
+			if (!this.flusher.isFlushing) {
+				this.flusher.schedule(800, async () => {
+					await this.runFlush();
+				});
+			}
 			return;
 		}
 
@@ -668,13 +740,21 @@ export default class MetadataButlerPlugin extends Plugin {
 				this.settings.dateFormat,
 				true
 			);
-			if (!update) continue;
+			const needsWrite = update !== null ||
+				this.settings.fields.some(f => f.enabled && (
+					f.id === "dateCreated" ||
+					(f.type === "select" && (f.options?.length ?? 0) > 0) ||
+					f.type === "multi" ||
+					f.type === "boolean" ||
+					f.type === "number"
+				));
+			if (!needsWrite) continue;
 
 			this.bulkRunning = true;
 			try {
 				await this.writer.write(
 					file,
-					update,
+					update ?? {},
 					this.settings.fields,
 					this.settings.dateFormat,
 					undefined,

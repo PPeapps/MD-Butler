@@ -28,6 +28,8 @@ export interface ConditionConfig {
 	value?: string;
 }
 
+export type FieldProcessingMode = "always" | "newOnly" | "ifEmpty";
+
 export interface MetadataFieldConfig {
 	id: MetadataFieldId;
 	yamlKey: string;
@@ -43,4 +45,5 @@ export interface MetadataFieldConfig {
 	isCustom?: boolean;
 	condition?: ConditionConfig;
 	requirement?: FieldRequirement;
+	processingMode?: FieldProcessingMode;
 }

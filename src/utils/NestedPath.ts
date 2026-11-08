@@ -54,6 +54,34 @@ export function hasNested(obj: NestedObject, path: string): boolean {
 	return getNested(obj, path) !== undefined;
 }
 
+/**
+ * Reads a field value tolerating both storage shapes for a dotted yamlKey:
+ * - truly nested: `Note: { NoteType: "PDF" }`
+ * - literal flat dot-key: `"Note.NoteType": "PDF"`
+ * - flat leaf key: `NoteType: "PDF"`
+ * Non-dotted keys behave exactly like getNested.
+ */
+export function getValueAnywhere(
+	obj: NestedObject,
+	path: string
+): unknown {
+	const nested = getNested(obj, path);
+	if (nested !== undefined) return nested;
+	if (path.includes(".")) {
+		if (obj[path] !== undefined) return obj[path];
+		const leaf = path.split(".")[path.split(".").length - 1]!;
+		if (obj[leaf] !== undefined) return obj[leaf];
+	}
+	return undefined;
+}
+
+export function hasValueAnywhere(
+	obj: NestedObject,
+	path: string
+): boolean {
+	return getValueAnywhere(obj, path) !== undefined;
+}
+
 export function isEmptyValue(value: unknown): boolean {
 	if (value === undefined || value === null) return true;
 	if (typeof value === "string") return value.trim() === "";

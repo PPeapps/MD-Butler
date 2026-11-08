@@ -714,6 +714,20 @@ export class FieldListComponent {
 					await this.plugin.saveSettings();
 				});
 
+/* Processing Mode Dropdown (MD-004) */
+			const pmContainer = row.createDiv();
+			new DropdownComponent(pmContainer)
+				.addOption("", "Default")
+				.addOption("always", "Always")
+				.addOption("newOnly", "New only")
+				.addOption("ifEmpty", "If empty")
+				.setValue(field.processingMode ?? "")
+				.onChange(async (val) => {
+					field.processingMode =
+						val === "" ? undefined : (val as "always" | "newOnly" | "ifEmpty");
+					await this.plugin.saveSettings();
+				});
+
 			/* Enabled Toggle */
 			const toggleContainer = row.createDiv();
 			new ToggleComponent(toggleContainer)
