@@ -1,5 +1,22 @@
 # Changelog
 
+## 1.1.0 (2026-11-08) — tags reliability, per-field processingMode, bulk value operations, import/export
+
+### Features
+- **Per-field processingMode (MD-004)** — each field can now be configured individually with `always` (always create/overwrite), `newOnly` (only when the field is missing) or `ifEmpty` (only when missing or empty). New dropdown in the field list (Default / Always / New only / If empty). Default preserves previous behaviour (`ifEmpty`).
+- **Bulk value modal — folder scope (F-016)** — new command "Set field value in folder": choose a folder, a configured field, a value (text/template/select option/multi toggles) and an optional processingMode, then apply to all Markdown files in that folder (respects PathFilter, protected keys).
+- **Bulk value modal — multi-note selection (F-018)** — new command "Set field value in selected notes": same modal with scope "Selected files" (start from the active note, add/remove files).
+- **Import/export field config (F-008)** — commands "Export field config" (writes `md-butler-field-config.json` to the vault root) and "Import field config" (loads fields from a chosen JSON file).
+
+### Fixes
+- **`tags` field reliability (MD-007 follow-up)** — `tags` is now `type: "multi"` by default (was `text`), with a loadSettings migration for existing configs. Missing/empty `tags` is reliably written as `tags: []`; existing values (e.g. RAGtopus `[PDF, Summary]`) are never touched. `force-apply` no longer skips files when the update payload is empty; `newOnly` scope now also triggers on missing required fields; open events are flushed (debounced) so new notes get their defaults. Custom typed defaults are no longer overwritten with an empty string.
+
+### Internal
+- `DEFAULT_FIELD_EVENTS.tags` extended to `["open", "modify", "bulk"]`.
+- Added `BulkValueModal` view.
+
+---
+
 ## 1.0.8 (2026-08-30) — protect existing YAML values, create empty tags
 
 ### Fixes

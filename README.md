@@ -51,6 +51,10 @@
 | Full repair | `md-butler:full-repair` | Force-apply → cleanup → consistency check |
 | Vault Consistency Check | `md-butler:check-consistency` | Scan vault for missing fields |
 | Clean up old YAML keys | `md-butler:cleanup-keys` | Remove orphaned YAML keys from deleted fields |
+| Set field value in folder | `md-butler:bulk-set-value` | Set a field value for all notes in a folder |
+| Set field value in selected notes | `md-butler:bulk-set-value-selection` | Set a field value for a selected set of notes |
+| Export field config | `md-butler:export-field-config` | Export field configuration to JSON |
+| Import field config | `md-butler:import-field-config` | Import field configuration from JSON |
 
 ## Settings
 
@@ -76,7 +80,7 @@
 | lastModified | LastModified | modify, rename, bulk | Date the file was last modified |
 | lastMoved | LastMoved | rename | Date the file was last renamed/moved (`requirement: if-exists`) |
 | source | Source | open, rename, bulk | Custom field (disabled by default) |
-| tags | Tags | modify, bulk | Custom field (disabled by default) |
+| tags | Tags | open, modify, bulk | Custom field (disabled by default) |
 
 ### Select fields
 
